@@ -1,4 +1,4 @@
-![DESC](/figures/logo_med_dark.png)
+![DESC](/figures/logo_med_clear.png)
 
 This document explains the DESC code and required stellarator theory.
 
