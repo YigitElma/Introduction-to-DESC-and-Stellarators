@@ -1,4 +1,4 @@
-\subsection{Proximal Projection}
+\subsection{Proximal Projection and Force Balance Constraint}
 In \texttt{DESC}, we deal with optimization problems of linearly and nonlinearly constrained kind. Among the non-linear constraints, \class{ForceBalance} has a special place. When there is an optimization problem with \class{ForceBalance} constraint, \texttt{DESC} internally wraps the objective and this non-linear constraint with a \obj{ProximalProjection} objective class. This is then passed to the objective of \obj{LinearConstraintProjection}.
 \vspace{0.5cm}
 
