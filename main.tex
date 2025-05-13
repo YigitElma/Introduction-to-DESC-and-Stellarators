@@ -1,0 +1,186 @@
+\documentclass{article}
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=2cm,right=2cm,marginparwidth=1.75cm, ]{geometry}
+
+% Useful packages
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+
+\definecolor{plasmadarkgreen}{RGB}{44, 75, 78}
+\definecolor{plasmagreen}{RGB}{69, 115, 105}
+\definecolor{plasmalightgreen}{RGB}{89, 184, 184}
+
+\usepackage{esint}
+\usepackage{amssymb}
+\usepackage{relsize}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=plasmagreen]{hyperref}
+\usepackage{setspace}
+\usepackage{float}      % for putting [H] condition to figures etc.
+\usepackage{fancyhdr}   % for page style 
+\usepackage{minted}  % for python code
+\usepackage{subfiles}
+\usepackage[font={small}]{caption} 
+\usemintedstyle{emacs}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+\usepackage[most]{tcolorbox}
+
+\usepackage[ISO]{diffcoeff}[=v4]
+\usepackage{mathtools}
+% % load after mathtools (which loads amsmath)
+\usepackage{amsthm}
+
+\graphicspath{ {./figures/} }
+
+% Define section and subsection colors
+\titleformat{\section}
+{\color{plasmadarkgreen}\normalfont\Large\bfseries}
+{\color{plasmadarkgreen}\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\color{plasmalightgreen}\normalfont\Large\bfseries}
+{\color{plasmalightgreen}\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+{\color{plasmagreen}\normalfont\Large\bfseries}
+{\color{plasmagreen}\thesubsubsection}{1em}{}
+
+\addto\captionsenglish{\renewcommand{\contentsname}{\bfseries{Table of Contents}}}
+
+
+\input{shortcuts}
+
+
+\title{Introduction to DESC and Stellarators}
+\author{Yigit Gunsur Elmacioglu. Kaya Unalmis}
+
+\begin{document}
+\onehalfspacing
+\maketitle
+
+\pagebreak
+{\footnotesize \tableofcontents
+                \listoftables
+                \listoffigures
+} 
+
+\pagebreak
+\pagenumbering{arabic}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textcolor{plasmalightgreen}{\rightmark}}  % Section in blue on the left
+\fancyhead[R]{\textcolor{plasmadarkgreen}{\leftmark}}   % Chapter in red on the right (for books or report class)
+\fancyfoot[R]{\color{plasmagreen}{\small{Princeton University - Plasma Control Group}}}
+\let\oldheadrule\headrule% Copy \headrule into \oldheadrule
+\renewcommand{\headrule}{\color{plasmagreen}\oldheadrule}% Add colour to \headrule
+\renewcommand{\headrulewidth}{0.5pt}
+
+% ======================================================================
+
+
+\section{Introduction}
+
+This document is for getting started with the basic maths used in Stellarators, more specifically the ones used in 3D MHD equilibrium code DESC. It will serve as a cheat sheet for the future. In preparation of this document, the book "An Introduction to Stellarators" by Imbert Gerard et al. is heavily used \cite{imbert-gerard_introduction_nodate}.
+
+
+% ======================================================================
+
+
+\section{Basis Functions}
+
+\subfile{sections/basis/fourier-series.tex}
+\pagebreak
+\subfile{sections/basis/zernike-polynomials.tex}
+\pagebreak
+\subfile{sections/basis/fourier-zernike.tex}
+\subfile{sections/basis/stell-sym.tex}
+
+
+% ======================================================================
+
+
+\pagebreak
+\section{Coordinates}
+
+Magnetic confinement machines have the shape of torus (or donut). Instead of using cartesian coordinate system which has straight lines as axis, due to the curved shaped of the torus, we can use curvilinear coordinates. For example, any function inside this geometry can be defined in terms of cylindrical coordinates with R (radial part), $\phi$ (toroidal angle) and Z (height). However, as you can see from the right side of Figure \ref{coords}, there is a more convenient set of curvilinear coordinates that can define any point of this torus which is called flux coordinates. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{coords.png}
+    \caption{{\color{red}\textbf{Sketch a better figure for this}}}
+    \label{coords}
+\end{figure}
+
+These coordinates are $\rho, \theta$ and $\zeta$. Here, $\zeta$ is exactly the same as $\phi$ in cylindrical coordinates. $\rho$ is similar to the radial coordinate of cylindrical coordinates but since we will try to find more intricate shapes rather than a bunch of circles, instead of defining it as the distance to the center, we will define it as a function of the flux and this will express the index of flux surface. Lastly, $\theta$ is the poloidal angle. 
+
+
+\subfile{sections/coordinates/co-contravariant.tex}
+\subfile{sections/coordinates/vector-operations.tex}
+\subfile{sections/coordinates/desc-implementation.tex}
+
+
+% ======================================================================
+
+
+\pagebreak
+\section{Fields}
+
+\subfile{sections/fields/rotational-transform.tex}
+\subfile{sections/fields/ideal-mhd.tex}
+\subfile{sections/fields/rotational-transform-computation.tex}
+
+
+% ======================================================================
+
+
+\pagebreak
+\section{Optimization}
+
+\subfile{sections/optimization/optimization.tex}
+\subfile{sections/optimization/proximal-projection.tex}
+
+
+% ======================================================================
+
+\pagebreak
+\section{Profiling DESC}
+
+\subfile{sections/profiling/profiling.tex}
+
+
+% ======================================================================
+
+\pagebreak
+\section{Multi-Device Applications}
+
+\subfile{sections/multi-device/mpi4jax.tex}
+
+
+% ======================================================================
+
+{\color{blue} \section{DON'T FORGET TO INCLUDE}
+\begin{itemize}
+    \item Better explain optimization
+    \item Make better figure for coordinates
+    \item Make a plot using Dario's script for covariant and contravariant basis vectors
+\end{itemize}
+
+}
+
+\bibliographystyle{ieeetr}
+\bibliography{bibtex}
+
+
+% ======================================================================
+
+
+\appendix
+\input{sections/appendix}
+
+
+\end{document}

@@ -1,0 +1,140 @@
+\subsection{General}
+
+In \texttt{DESC}, we solve the inverse equilibrium problem using the pseudo-spectral method. This means, for equilibrium solve, our objective is to find spectral coefficients $\mathcal{R}_{lmn}$, $\mathcal{Z}_{lmn}$ and $\mathcal{\lambda}_{lmn}$, such that $\mathbf{J}\times\mathbf{B}-\nabla p = 0$ is satisfied.
+
+Here, we will go over the fixed-boundary solution process. Once we initialize the equilibrium object, to solve for equilibrium, we need to specify constraints and objectives. In \texttt{DESC} by default, every spectral coefficient is optimizable, so during the optimization process, if nothing is given to the optimizer, it will change any parameter to satisfy the objective. However, this is not what we want. For example, we want the last closed flux surface shape to stay the same. The full state vector in \texttt{DESC} includes basic coefficients like $\mathcal{R}_{lmn}$ but also we have $\textit{Rb}_{mn}$ which are coefficients of the LCFS that is defined by double Fourier series that are also optimizable by default. To fix the boundary parameters, we have the constraints \textbf{FixBoundaryR} and \textbf{FixBoundaryZ} that can fix every mode or some user specified modes. These constraints convert $\textit{Rb}_{mn}$ and $\textit{Zb}_{mn}$ from optimizable parameter to fixed parameter. The actual constraints that satisfy the boundary is what the user specified it to be are the self-consistency constraints, namely \textbf{BoundaryRSelfConsistency} and \textbf{BoundaryZSelfConsistency}. These constraints force the boundary shape evaluated at $\rho=1$ to be equal to $\textit{Rb}_{mn}$ values. Since the radial part of Zernike polynomials evaluated at $\rho=1$ is always 1, the self-consistency constraint ends up being,
+\begin{equation*}
+    \sum_{l}\left( \sum_{m}\sum_{n}\mathcal{R}_{lmn}cos(m\theta)cos(n\zeta)\right)
+    = \sum_{m}\sum_{n}\textit{Rb}_{mn}cos(m\theta)cos(n\zeta)
+\end{equation*}
+\begin{equation*}
+0    \textit{Rb}_{mn} = \sum_{l}\mathcal{R}_{lmn}
+\end{equation*}
+where $m$ and $n$ values on both sides must be equal.
+
+The objectives usually cannot be described as linear operations (at least in \texttt{DESC}). For example, force balance objective calculates $f(\Vec{x})=\textbf{J}\times\textbf{B}-\nabla p$ at each grid point, and defines the cost as $F(\Vec{x})=||f(\Vec{x})-0||_2^2$. Due to nonlinearities, we should solve this problem not analytically but through an optimization such that,
+\begin{equation}
+    \Vec{x} = \arg \min_{\Vec{x}} F(\Vec{x}) \hspace{1cm} \text{such that } \mathbf{A}\Vec{x} = \Vec{b}
+\end{equation}
+However, due to the constraints on $\Vec{x}$, this is inconvenient to implement using the existing optimizers. What we can do is transform this problem into an unconstrained optimization problem in $\Vec{y}$ with the following steps. Assume we have only linear constraints (for fixed boundary force-balance problem this is the case), then one can write it in matrix form,
+\begin{align*}
+    \mathbf{A}\Vec{x} &= \Vec{b} \\
+    \Vec{x} &= \Vec{x}_{particular} + \Vec{x}_{homogenous} \\
+    \mathbf{A}\Vec{x}_{particular} &= \Vec{b} \\
+    \mathbf{A}\Vec{x}_{homogenous} &= 0 \\
+    \Vec{x}_{homogenous} &= \mathbf{Z}\Vec{y} \hspace{1cm} \text{where $\mathbf{Z}$ is the nullspace of $\mathbf{A}$}
+\end{align*}
+$\mathbf{Z}$ can be elaborated as such,
+\begin{equation*}
+    \mathbf{A}\Vec{x}_i = 0 
+\end{equation*}
+\begin{equation*}
+    \mathbf{Z} = \begin{bmatrix}
+        : & : & : & ... & : \\
+        \Vec{x}_1 & \Vec{x}_2 & \Vec{x}_3 & ... & \Vec{x}_N \\
+        : & : & : & ... & :\\
+    \end{bmatrix}
+\end{equation*}
+\begin{equation*}
+    \mathbf{A}\mathbf{Z} = 0 
+\end{equation*}
+$\mathbf{Z}$ is orthogonal matrix such that $\mathbf{Z}^T\mathbf{Z}=\mathbf{I}$, then, 
+\begin{align*}
+    \Vec{x}_{particular} = \mathbf{A}^{-1}\Vec{b}\\
+    \Vec{x}_{homogeneous} = (\Vec{x} - \Vec{x}_{particular})\\
+    \Vec{y} = \mathbf{Z}^T (\Vec{x} - \Vec{x}_{particular})
+\end{align*}
+
+Notice that the dimensions of $\Vec{x}$ and $\Vec{y}$ don't need to be the same, actually $\Vec{y}$ is smaller than $\Vec{x}$, that's why we refer to it as $\Vec{x}_{reduced}$, too. Also, we slightly abused the notation by writing $\mathbf{A}^{-1}$, because in general $\mathbf{A}$ is not square, so here $\mathbf{A}^{-1}$ is the left inverse. Thereby, we successfully converted the optimization problem into an unconstrained one, since $\Vec{y}$ is unconstrained.
+\begin{equation}
+    \Vec{y} = \arg \min_{\Vec{y}} ||F(\Vec{y})||^2_2
+\end{equation}
+In 	exttt{DESC}, the user can go back and forth between reduced and full state vectors using the \textbf{project} and \textbf{recover} functions. The former projects the full state vector to the reduced vector, whereas the latter recovers the full state vector from the reduced state vector.
+
+Although the theory is concrete, in numerical methods, there are some concerns about executing these steps. First of all, taking the inverse of \textbf{A} is computationally intensive. Instead, first, we will try to reduce the size of \textbf{A} using the fixed parameter constraints, clean it up a bit, and take the inverse of the much smaller matrix. This is done in the \textbf{factorize\_linear\_constraints()} function. Some of the tricks to simplify \textbf{A} used in 	exttt{DESC} can be found in Appendix \ref{appendix-factorize}.
+
+Now, we will focus on the objective function $F(\Vec{y})$. Here, the input to this objective is the state vector, and the output is the force error at each grid point. Usually, we use double the number of modes for grid points, so the output vector size is twice the size of the input vector. Ideally, we want every element of the output to be 0. During optimization, we will use Newton's method to find the coefficient values that make the objective as close to 0 as possible. Newton's method is a gradient descent method. It is basically the first 2 terms of the Taylor expansion
+\begin{equation}
+    F(y+\Delta y) = F(y) + F'(y)\Delta y + \mathcal{O}(y^2) \label{newtons-taylor}
+\end{equation}
+For numerical implementation, we will use this equation iteratively, and at each step, we will try to find $\Delta y$ that minimizes $F(y+\Delta y)=0$. Another naming convention is to call $F'(y)$ as the Jacobian $J(y)$, since for vector values y, the derivative will be the Jacobian matrix. So, we will write Equation \ref{newtons-taylor} as,
+\begin{equation*}
+    F(y+\Delta y) = F(\Vec{y}) + \mathbf{J}(\Vec{y})\Delta \Vec{y}
+\end{equation*}
+This is the subproblem of our optimization. We need to find the $\Delta y$ for each step of the main optimization problem. Here is the subproblem,
+\begin{equation}
+    \min_{\Delta y} ||F(y^k)  + \mathbf{J}(y^k) \Delta y||^2_2
+\end{equation}
+
+We used $y^k$ to show that during this subproblem, $y^k$ has a set value. From now on, we will drop the argument from the Jacobian and the objective function, so $F(y^k)\rightarrow F$ and $\mathbf{J}(y^k) \rightarrow \mathbf{J}$. 
+
+The force-balance error function has an absolute value inside of it which makes the values strictly positive. Therefore, the minimum value for the above problem is 0. If we were to solve this problem for $\Delta y$ by gradient descent (finding the Newton step), we need to take the inverse of $\mathbf{J}$ but it is usually not square. Therefore, we multiply both sides of $F + J \Delta y = 0$ by $\mathbf{J}^T$
+\begin{equation*}
+    \Delta \Vec{y} = -{(\mathbf{J}^T\mathbf{J})}^{-1}\mathbf{J}^TF 
+\end{equation*}
+Although on paper this is the proper solution to this linear system, numerically there are some limitations that push us from implementing it. In spectral methods, the Jacobian matrix is usually ill-conditioned, which means the highest to lowest eigenvalue ratio is very high ($>10^6$). Ill-conditioned matrices are sensitive to slight changes in values, and solution to $\mathbf{J}\Vec{x}=b$ is sensitive if there is any numerical error such as floating point or round-off. When an ill-conditioned matrix is multiplied by its transpose the resulting matrix is square which is nice but has a condition number even higher than the original one. Therefore, instead of dealing with the ${(\mathbf{J}^T\mathbf{J})}^{-1}$ term and getting extremely error-prone results, we will take the decomposition of the Jacobian. First, let's look at QR decomposition,
+\begin{align*}
+    \mathbf{J} &= \mathbf{Q}\mathbf{R} \hspace{1cm} \text{where } \mathbf{Q}^T\mathbf{Q}=\mathbb{I}, \mathbf{Q}\in \mathbb{R}^{m\times n} \text{ and }\mathbf{R}\in \mathbb{R}^{n\times n}\\
+    \mathbf{Q}\mathbf{R}\Delta \Vec{y} &= - F \\
+    \mathbf{Q}^T\mathbf{Q}\mathbf{R}\Delta \Vec{y} &= - \mathbf{Q}^TF \\
+    \mathbf{R}\Delta \Vec{y} &= - \mathbf{Q}^TF
+\end{align*}
+The last equation can be easily solved using back-substitution since R is an upper triangular matrix.
+
+For wide Jacobian,
+\begin{align*}
+    \mathbf{J}^T &= \mathbf{Q}\mathbf{R} \hspace{1cm} \text{where } \mathbf{Q}^T\mathbf{Q}=\mathbb{I}, \mathbf{Q}\in \mathbb{R}^{n\times m} \text{ and }\mathbf{R}\in \mathbb{R}^{m\times m}\\
+    {\mathbf{R}^T}\mathbf{Q}^T\Delta \Vec{y} &= - F \rightarrow {\mathbf{R}^T}v = - F  \rightarrow \text{(solve for v through forward-substitution)} \rightarrow \Delta y = \mathbf{Q}v 
+\end{align*}
+
+The above steps use a purely Newton step to reduce the cost function, which is not always the optimum choice. In 	exttt{DESC}, we have implemented many different optimizers that use better methods than pure gradient descent. For the equilibrium solve, if the user doesn't specify an optimizer explicitly the default is "lsq-exact" which uses linearized least-squares with trust region. The optimization problem for that is, 
+
+\begin{align*}
+    &\min_{\Delta y} ||F  + \mathbf{J} \Delta y||^2_2 \\
+    &\text{subject to } ||\Delta y||_2 \leq r_{tr}
+\end{align*}
+
+To do so, we add a regularization parameter $\alpha$,
+
+\begin{align*}
+    &\min_{\Delta y} ||F  + \mathbf{J} \Delta y||^2_2 + \alpha||\Delta y||_2^2  \\
+    &\text{subject to } ||\Delta y||_2 \leq r_{tr}
+\end{align*}
+
+If we expand the objective function,
+
+\begin{align*}
+    ||F  + \mathbf{J} \Delta y||^2_2 + &\alpha||\Delta y||_2^2 \\
+    &= \Delta y^T \mathbf{J}^T \mathbf{J} \Delta y + 2F^T\mathbf{J} \Delta y + \alpha \Delta y^T\Delta y + F^TF \\
+    &= \Delta y^T (\mathbf{J}^T \mathbf{J} + \alpha \mathbb{I}) \Delta y + 2F^T\mathbf{J} \Delta y + F^TF \\
+    &= \Delta y^T \begin{bmatrix}
+        \mathbf{J} & \sqrt{\alpha} \mathbb{I}
+    \end{bmatrix} \begin{bmatrix}
+        \mathbf{J} \\ \sqrt{\alpha} \mathbb{I}
+    \end{bmatrix} \Delta y + 2\begin{bmatrix}
+        F & 0
+    \end{bmatrix} \begin{bmatrix}
+        \mathbf{J} \\ \sqrt{\alpha} \mathbb{I}
+    \end{bmatrix} \Delta y + \begin{bmatrix}
+        F & 0
+    \end{bmatrix} \begin{bmatrix}
+        F \\ 0
+    \end{bmatrix}
+\end{align*}
+
+And this can be written in least-squares form,
+
+\begin{equation}
+    \left\lVert \begin{bmatrix}
+        \mathbf{J} \\ \sqrt{\alpha} \mathbb{I}
+    \end{bmatrix} \Delta y + \begin{bmatrix}
+        F \\ 0
+    \end{bmatrix} \right\rVert_2^2
+\end{equation}
+
+And if we introduce augmented vector and matrix, $F_a$ and $\mathbf{J}_a$, we can write the regularized trust-region subproblem as,
+
+\begin{align*}
+    &\min_{\Delta y} ||\mathbf{J}_a\Delta y + F_a||_2^2 \\
+    &\text{subject to } ||\Delta y||_2<r_{tr}
+\end{align*}

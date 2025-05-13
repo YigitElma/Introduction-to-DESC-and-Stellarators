@@ -1,0 +1,52 @@
+\subsection{Installing MPI4JAX}
+The installation on the website does not work as is, also for computing clusters in Princeton we already have C compilers for openmpi, so we will use them. The instructions are slightly complicated but as of February 18th 2025, it works. First, we will get openmpi from cluster modules, install jax with GPU support. Then, we will use the hacky way of installing mpi4py and mpi4jax as explained in the Princeton cluster page, note that that page use the trick only for mpi4py but we will use it for mpi4jax too, so, follow these instructions to revert the changes.
+
+\begin{minted}[fontsize=\footnotesize]{bash}
+module load anaconda3/2024.6
+conda create -n desc-mpi python=3.12
+conda activate desc-mpi
+module load openmpi/gcc/4.1.6
+# install jax
+pip install -U jax['cuda12']
+\end{minted}
+
+For Python versions newer than 3.8, we have to use following as explained in \href{https://researchcomputing.princeton.edu/support/knowledge-base/mpi4py}{Princeton Research Computing page}.
+\begin{minted}[fontsize=\footnotesize]{bash}
+# install mpi4py
+export MPICC=$(which mpicc)
+cd /home/<YOUR_NETID>/.conda/envs/desc-mpi/compiler_compat
+rm -f ld
+ln -s /usr/bin/ld ld
+pip install mpi4py --no-cache-dir
+# move back to main folder, we don’t want to install it to /compiler_compat
+cd ~
+# To install `mpi4jax`, we need to grab the source code
+# install mpi4jax
+git clone https://github.com/mpi4jax/mpi4jax
+cd mpi4jax
+\end{minted}
+
+Comment out a couple of lines in `setup.py` in mpi4jax directory (inside get\_sycl\_path()):
+\begin{minted}[fontsize=\footnotesize]{python}
+elif os.path.exists("/opt/intel/oneapi/compiler/latest/"):
+	_sycl_path = "/opt/intel/oneapi/compiler/latest/"
+\end{minted}
+
+and then back in the command line,
+\begin{minted}[fontsize=\footnotesize]{bash}
+cd ..
+python -c 'import mpi4jax' # check that it works
+pip install -e .  # install mpi4jax to the environment, add it to the path
+# Now that we are done with openMPI stuff, revert some changes previously made
+cd /home/<NetID>/.conda/envs/desc-mpi/compiler_compat
+rm -f ld
+ln -s ../bin/x86_64-conda-linux-gnu-ld ld
+# move back to main folder
+cd ~
+# install DESC as usual
+\end{minted}
+
+mpi4jax hello\_world example: \url{https://mpi4jax.readthedocs.io/en/latest/usage.html}
+
+Note: I believe that we can skip cloning mpi4jax by setting some environment variable, it should basically use the proper compiler, maybe try to set “CMPLR\_ROOT”?
+If we ever gonna make this a user feature, it needs to be less complicated as it can be. See \href{https://github.com/mpi4jax/mpi4jax/issues/245}{the issue} for future fixes.

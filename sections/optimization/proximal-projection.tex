@@ -1,0 +1,256 @@
+\subsection{Proximal Projection}
+In \texttt{DESC}, we deal with optimization problems of linearly and nonlinearly constrained kind. Among the non-linear constraints, \class{ForceBalance} has a special place. When there is an optimization problem with \class{ForceBalance} constraint, \texttt{DESC} internally wraps the objective and this non-linear constraint with a \obj{ProximalProjection} objective class. This is then passed to the objective of \obj{LinearConstraintProjection}.
+\vspace{0.5cm}
+
+\begin{tikzpicture}[
+    box/.style={rectangle, draw, rounded corners, text centered, minimum height=2em, minimum width=4em},
+    elem/.style={text centered, minimum height=1.5em},
+    ->, >=Stealth, node distance=0.5cm
+  ]
+
+  % Top node
+  \node[box] (linear) {LinearConstraintProjection};
+
+  % Branches from LinearConstrainProjection
+  \node[box, below left=of linear] (obj) {Objective};
+  \node[box, below right=of linear] (constr) {Constraint};
+  % Elements under bottom Objective Part
+  \node[elem, below=0.1cm of constr] (ca_elem1) {\class{FixBoundaryR}};
+  \node[elem, below=0.6cm of constr] (ca_elem2) {\class{FixBoundaryZ}};
+  \node[elem, below=1.1cm of constr] (ca_elem2) {\class{FixPressure}};
+  \node[elem, below=1.6cm of constr] (ca_elem2) {...};
+  
+  % ProximalProjection subclass under Objective Part
+  \node[box, below=of obj] (prox) {ProximalProjection};
+
+  % Branches from ProximalProjection
+  \node[box, below left=of prox] (prox_constr) {Constraint};
+  \node[box, below right=of prox] (prox_obj) {Objective};
+
+
+  % Elements under bottom Objective Part
+  \node[elem, below=0.1cm of prox_obj] (o_elem1) {\class{QuasiSymmetry}};
+  \node[elem, below=0.6cm of prox_obj] (o_elem2) {\class{AspectRatio}};
+  \node[elem, below=1.1cm of prox_obj] (o_elem2) {...};
+
+  \node[box, below=of prox_constr] (c_linear) {LinearConstraintProjection};
+  \node[box, below left=of c_linear] (l_constr) {Constraint};
+  \node[box, below right=of c_linear] (l_obj) {Objective};
+    
+  \node[elem, below=0.1cm of l_obj] (force) {\class{ForceBalance}};
+  \node[elem, below=0.1cm of l_constr] (lcfs) {Fixed-Boundary Constraints};
+
+  % Draw arrows
+  \draw (linear) -- (obj);
+  \draw (linear) -- (constr);
+  \draw (obj) -- (prox);
+  \draw (prox) -- (prox_constr);
+  \draw (prox) -- (prox_obj);
+  \draw (prox_constr) -- (c_linear);
+  \draw (c_linear) -- (l_constr);
+  \draw (c_linear) -- (l_obj);
+
+\end{tikzpicture}
+
+This optimization has the mathematical notation,
+\begin{equation}
+    \begin{split}
+        \min_{c} \hspace{1cm} &g(\textbf{x, c}) \\
+        \text{subject to } \hspace{1cm} &f(\textbf{x, c}) = 0\\
+        &\begin{bmatrix}
+            A_1 & 0\\ 0 & A_2
+        \end{bmatrix}\begin{bmatrix}
+            \mathbf{x} \\ \mathbf{c}
+        \end{bmatrix} = \begin{bmatrix}
+            \mathbf{c} \\ \mathbf{b}
+        \end{bmatrix}
+    \end{split}
+\end{equation}
+where \textbf{x} consists of $R_{lmn}, Z_{lmn}, \lambda_{lmn}$, and \textbf{c} consists of the optimization parameters like $Rb_{lmn}, Zb_{lmn}$ and other optimizable parameters from other \textit{things} such as coils, fields, etc.
+
+The important point to note here is that only $Rb_{lmn}, Zb_{lmn}$ and profiles are included in \textbf{c} for the equilibrium. $Rb_{lmn}, Zb_{lmn}$ have a simple linear dependence with $R_{lmn}, Z_{lmn}$ through \class{BoundaryRSelfConsistency} and \class{BoundaryZSelfConsistency}, thus once you know the profiles, one can solve the equilibrium and get what should be \textbf{x} for those \textbf{c} values. We will use this dependence for taking the Jacobian of $g(\textbf{x, c})$.
+
+Let's consider the first order Taylor expansion of $g(\textbf{x, c})$ and $f(\textbf{x, c})$,
+
+\begin{align}
+    g(x + \dx,c + \dc) = g(x, c) + \frac{\partial g}{\partial x} \dx + \frac{\partial g}{\partial c} \dc \label{g_taylor}\\
+    f(x + \dx,c + \dc) = f(x, c) + \frac{\partial f}{\partial x} \dx + \frac{\partial f}{\partial c} \dc \label{f_taylor}
+\end{align}
+In Equation \ref{f_taylor}, since we were in force balance before, and we solved the equilibrium, hence the update is also in force balance, we can remove the first 2 terms. This gives us a relation between $\dx$ and $\dc$. But note that, this relation only uses the first-order terms and expects a very good force balance; some of the inaccuracies of the \obj{ProximalProjection} stem from this fact.
+
+\begin{equation}
+    \dx = - \left( \frac{\partial f}{\partial x} \right) ^{-} \frac{\partial f}{\partial c} \dc
+\end{equation}
+
+Now, we can substitute it in \ref{g_taylor},
+
+\begin{equation}
+    g(x + \dx,c + \dc) = g(x, c) + \left[ \frac{\partial g}{\partial c} - \frac{\partial g}{\partial x} \left( \frac{\partial f}{\partial x} \right) ^{-} \frac{\partial f}{\partial c} \right] \dc \label{g_linear}
+\end{equation}
+
+For each step of the optimization, we linearize the objective function as \ref{g_linear}, and try to minimize the next value by trust region (the default optimizer \textit{lsqtr} uses this method), 
+
+\begin{align*}
+    &\min_{\dc} ||g  + \mathbf{J} \dc||^2_2 + \alpha||\dc||_2^2  \\
+    &\text{subject to } ||\dc||_2 \leq r_{tr}
+\end{align*}
+as explained before for equilibrium. Note that, apart from the calculation of the Jacobian, the optimization process is the same as equilibrium solve or other multi-objective linearly constrained problems, that is why \texttt{DESC} doesn't have a dedicated optimizer for this problem, but only a constraint wrapper that executes additional steps for the Jacobian calculation, like updating the equilibrium and taking derivative of the \class{ForceBalance} constraint etc.
+
+
+The above notation is relatively simple, but once we try to code it, there are couple of challenges that make it hard to grasp at first.
+\begin{itemize}
+    \item Compute functions never use $Rb_{lmn}, Zb_{lmn}$. So, in JAX tracing sense, their derivative is always 0. We need to account the self-consistency relations to take the proper derivatives with respect to these parameters.
+    \item In general, $g(\textbf{x, c})$ have multiple \textit{things} that it optimizes, such as \opt{Equilibrium}, \opt{Coils} etc. Each sub-objective of $g(\textbf{x, c})$ has a dedicated \textit{thing} to compute the cost. We need to be able to split the state vector and pass them to the correct objectives.
+    \item Due to trust-region, we may sometimes try same set of optimizable parameters multiple times, we should ideally store the combinations and omit doing same computations.
+\end{itemize}
+
+Our journey of weirdness starts now! Hopefully once we document what is going on here, we will be able to simplify it later!
+
+\subsubsection{Creation of the wrapper}
+
+The first instance of \obj{ProximalProjection} is in the \function{\_maybe\_wrap\_nonlinear\_constraints()} where we take in the constraints and if there is \class{ForceBalance}, we create a wrapper \obj{ProximalProjection}. Another difference is that we don't add the self-consistency constraints if we are using proximal. Then, \obj{ProximalProjection} is passed to \obj{LinearConstraintProjection}. Normally, \function{factorize\_linear\_constraints()} computes the null-space for the whole set of optimizable parameters, but for \obj{ProximalProjection}, we do something different and take some of the parameters out of the optimization, these are $[R_{lmn}, Z_{lmn}, \lambda_{lmn}, Ra_n, Za_n]$ (I guess since we don't add self-consistency stuff, those columns are already 0, anyway). \obj{ProximalProjection} compared to other \obj{ObjectiveFunction} classes doesn't include $[R_{lmn}, Z_{lmn}, \lambda_{lmn}, Ra_n, Za_n]$ in the state vector, so the \attribute{dim\_x} attribute of \obj{ProximalProjection} is not the usual state vector size, but the size without these variables.
+
+\subsubsection{Build Method}
+
+The \function{build()} method, as usual creates the constant arrays, and some useful objects for the class. The summary of the operations are,
+\begin{itemize}
+    \item Create and build \obj{LinearConstraintProjection} for the internal fixed-boundary \opt{Equilibrium} solves
+    \item Create unique list of \textit{things} (\opt{Equilibrium}, \opt{Coil}, \opt{Surface} etc) and form \attribute{\_things\_per\_objective\_idx} that stores which \textit{thing} belongs to which sub-objective
+    \item Set \attribute{\_eq\_idx} to the index of \opt{Equilibrium} in the list of \textit{things} 
+    \item Form the required transformation, \attribute{\_dxdc}, in \function{\_set\_eq\_state\_vector()} from optimizable parameters $Rb_{lmn}, Zb_{lmn}$ and profiles of \opt{Equilibrium} to full state vector of the \opt{Equilibrium} with $Rb_{lmn}, Zb_{lmn}$ set to 0
+    \item Form the feasible tangent directions matrix, \attribute{\_feasible\_tangents} used to be called \attribute{\_unfixed\_idx\_mat}. This matrix, when multiplied by the state vector that consists reduced state vector of the \opt{Equilibrium} and all the optimizable parameters of other \textit{things}, will return the full state vector with all parameters of each \textit{thing}
+    \item Create history arrays
+\end{itemize}
+
+\subsubsection{\function{\_set\_eq\_state\_vector()}}
+
+The pure purpose of this function is to create \attribute{\_dxdc} that helps us to use $Rb_{lmn}, Zb_{lmn}$ as optimization parameters but still be able to take proper derivatives. As explained above, our compute functions never use $Rb_{lmn}$ and $Zb_{lmn}$, so, their derivative is 0. But we know that changing $Rb_{lmn}, Zb_{lmn}$ is equivalent to changing $R_{lmn}, Z_{lmn}$. Actually, $Rb_{lmn}, Zb_{lmn}$ are dummy variables we introduced, because they are some linear combination of $R_{lmn}, Z_{lmn}$. Let's see an example where we have $Rb_{lmn}, Zb_{lmn}$, $p_l$ and $\iota_l$ as optimization parameters,
+
+\begin{equation}
+    dxdc @ \begin{bmatrix}
+        Rb_{lmn} \\ Zb_{lmn} \\ p_l \\ \iota_l
+    \end{bmatrix} \rightarrow \begin{bmatrix}
+        R_{lmn} \\ Z_{lmn} \\ \textbf{zeros\_like}(\lambda_{lmn}) \\ \textbf{zeros\_like}(Rb_{lmn}) \\ \textbf{zeros\_like}(Zb_{lmn}) \\ p_l \\ \iota_l
+    \end{bmatrix} \label{dxdc}
+\end{equation}
+
+To do so, we will use the self-consistency relation defined in \class{BoundaryRSelfConsistency} constraint. We can obtain
+\begin{equation}
+    A_RR_{lmn} = Rb_{lmn}
+\end{equation}
+We need the other way around, so, we will take the pseudo-inverse
+\begin{equation}
+    R_{lmn} = A_R^\dagger Rb_{lmn}
+\end{equation}
+We do the same for $Zb_{lmn}$. Since profiles don't have straight relation, we will use the identity matrix. So, the matrix \attribute{\_dxdc} has the form,
+
+\begin{equation}
+    dxdc = \begin{bmatrix}
+        A_R^\dagger & 0 & 0 \\
+        0 & A_Z^\dagger & 0 \\
+        0 & 0 & \mathbb{I} 
+    \end{bmatrix}
+\end{equation}
+
+
+\subsubsection{\attribute{\_feasible\_tangents}}
+
+Let's consider that our \textit{things} are \opt{Equilibrium}, \opt{Coil}, and \opt{Surface}, in this order. The structure of the \attribute{\_feasible\_tangents} is,
+
+\begin{equation}
+    \_feasible\_tangents = \begin{bmatrix}
+        D@Z & 0 & 0 \\
+        0 & \mathbb{I} & 0 \\
+        0 & 0 & \mathbb{I} 
+    \end{bmatrix}
+\end{equation}
+where $D$ stores the scaling coefficients and $Z$ is the null-space of the fixed-boundary problem such that $AZy=0$ with $y$ reduced state vector. Given that we find the particular solution, $Zy$ will always satisfy the constraints and hence we try to find $y$ that minimizes the objective.
+
+Multiplication of \attribute{\_feasible\_tangents} with the state vector where all except \opt{Equilibrium} have full state vectors, but \opt{Equilibrium} has the reduced state vector (not just $Rb_{lmn}, Zb_{lmn}$ but the actual reduced state vector from null-space, $y$) looks like,
+
+\begin{equation}
+    \begin{bmatrix}
+        D@Z & 0 & 0 \\
+        0 & \mathbb{I} & 0 \\
+        0 & 0 & \mathbb{I} 
+    \end{bmatrix}\begin{bmatrix}
+        y_{eq} \\ x_{coil} \\ x_{surf}
+    \end{bmatrix} = \begin{bmatrix}
+        x_{eq} \\ x_{coil} \\ x_{surf}
+    \end{bmatrix} \label{feasible-matmul}
+\end{equation}
+
+\subsubsection{Derivatives}
+
+Again, we are aiming to compute the following Jacobian,
+\begin{equation}
+    \frac{dg}{dc} = \frac{\partial g}{\partial c} - \frac{\partial g}{\partial x} \left( \frac{\partial f}{\partial x} \right) ^{-} \frac{\partial f}{\partial c}
+\end{equation}
+This can be thought of in JVPs. Let's assume we know the full set of derivatives of the cost function with respect to every parameter and call it $J$. Then, the above derivative can be computed by a couple of JVPs in proper tangent directions. In \function{\_jvp}, we will,
+\begin{enumerate}
+    \item Update the \opt{Equilibrium} to be in force balance
+    \item Find the proper tangent direction
+    \item Take the Jacobian vector product (JVP)
+\end{enumerate}
+Note that this doesn't include evaluating the full Jacobian!
+
+
+\subsubsection{\function{\_update\_equilibrium()}}
+
+The optimizer only knows about $y$ values (optimization variable after linear constraints are applied and the space is reduced). However, before calculating the Jacobian or the cost, \obj{LinearConstraintProjection} recovers the full state vector. For non-proximal objective functions, this is literally the full state vector. But for proximal, the \function{recover()} step only returns the $Rb_{lmn}, Zb_{lmn}$ and profiles of the \opt{Equilibrium} as well as whole state vectors of other \textit{things}. This means $\textbf{x}$ of \obj{ProximalProjection}, the arguments to its \function{compute\_()} and \function{jac\_()} methods is,
+
+\begin{equation}
+    \begin{bmatrix}
+        \begin{bmatrix}
+        Rb_{lmn} \\ Zb_{lmn} \\ p_l \\ \iota_l
+    \end{bmatrix} \\
+    x_{coil} \\ x_{surf}
+    \end{bmatrix}
+\end{equation}
+\function{\_update\_equilibrium()} method takes in this vector $\textbf{x}$, and does following,
+
+\begin{itemize}
+    \item Checks if we have seen this vector before
+    \item If not, it perturbs the equilibrium using the difference from the previous vector. Then, the equilibrium is resolved for force balance.
+    \item Takes the full state vector of the \opt{Equilibrium} stores as \attribute{xeq}, and the full state vector of the whole \textit{things} stores as \attribute{xopt}.
+\end{itemize}
+
+
+\subsubsubsection{\function{\_get\_tangent()}}
+
+This function is vectorized, so it will take in a single 1D array and return the proper tangent direction.
+
+In \function{\_proximal\_jvp\_f\_pure()}, we compute,
+\begin{equation}
+    dfdc = \left( \frac{\partial f}{\partial x} \right) ^{-} \frac{\partial f}{\partial c}
+\end{equation}
+
+Note that $f$ is the \obj{ForceBalance} and hence doesn't have any dependence on parameters of other \textit{things}. So, we first divide the $v$ into each component for different \textit{thing}, and take the derivative with respect to $Rb_{lmn}, Zb_{lmn}$, and profile params. 
+
+However, as we said previously, the compute functions don't have those parameters, so we need to find their corresponding $R_{lmn}, Z_{lmn}, L_{lmn}$ and profile params using \attribute{dxdc}, see Equation \ref{dxdc}.
+
+\begin{equation}
+    \frac{\partial f}{\partial c} = jvp(dxdc@dc, xf, constants)
+\end{equation}
+where $xf$ is the state vector of the \opt{Equilibrium}.
+
+For the $x$ part, we take the derivative using the \attribute{feasible\_tangents} of the equilibrium sub-problem using the \obj{LinearConstraintProjection} we created earlier,
+
+\begin{equation}
+    \frac{\partial f}{\partial x} = jvp(feasible\_tangents, xf, constants)
+\end{equation}
+
+And the inversion is carried out by Singular Value Decomposition (SVD). Note that in general, we get ill-conditioned matrices, therefore we add a small regularisation, by adding the smallest eigenvalue to all of the eigenvalues. \textbf{However, I am not sure if this is true for all cases, for well-conditioned problems, this can mess up stuff!}
+
+Note that above $dfdc$ is the derivative of \opt{Equilibrium} with respect to some of the $Rb_{lmn}, Zb_{lmn}$, and profile params (the ones that are free, so in the $y_{eq}$). But the full differentiation also includes other optimization parameters from other optimizable objects. That is why, we concatenate $dfdc$ with zeros of their size.
+
+$dfdc$ can be tranformed into the size of the full state vector by multiplication of \attribute{feasible\_tangents} as shown in Equation \ref{feasible-matmul}. So, we got,
+
+\begin{equation}
+    \frac{\partial g}{\partial x}\left( \frac{\partial f}{\partial x} \right) ^{-} \frac{\partial f}{\partial c} = jvp(feasible\_tangents @ dfdc, xg, constants)
+\end{equation}
+
+The last part we need is the direction in the optimization parameters. Since variables of other optimizable are all in $c$, we don't need to change the part of $v$ that was passed to \obj{ProximalProjection}. However, as noted before, we need to find corresponding $R_{lmn}, Z_{lmn}$ for $Rb_{lmn}, Zb_{lmn}$ by multiplying the \opt{Equilibrium} part of $v$ by \attribute{dxdc} which will give us the tangent in the full space, as shown in Equation \ref{dxdc}.
+
+\subsubsection{JVP}
+We found the proper tangent direction for the derivative. All we need to do is to compute the derivative using JVPs based on the \textbf{\textit{blocked}} or \textbf{\textit{batched}} method of the \obj{ObjectiveFunction}.

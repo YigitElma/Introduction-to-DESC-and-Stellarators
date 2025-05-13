@@ -1,0 +1,49 @@
+\subsection{Fourier Series}
+
+Any periodic smooth function can be written in Fourier series form. The basis functions for the Fourier series are sines and cosines which form an orthogonal basis that means,\\
+\begin{minipage}{0.49 \textwidth}
+    \begin{align}
+        \langle sin(m\theta) | sin(n\theta)\rangle &= \int_{0}^{T} sin(m\theta)sin(n\theta) d\theta \\[.3cm]
+        \langle sin(m\theta) | sin(n\theta)\rangle &= \begin{cases}
+            0         & \text{for } m \neq n \\[.3cm]
+            T/2        & \text{for } m = n
+        \end{cases}
+    \end{align} 
+\end{minipage}
+\begin{minipage}{0.49 \textwidth}
+    \begin{align}
+            \langle cos(m\theta) | cos(n\theta)\rangle &= \int_{0}^{T} cos(m\theta)cos(n\theta) \,d\theta \\[.3cm]
+            \langle cos(m\theta) | cos(n\theta)\rangle &= \begin{cases}
+                0         & \text{for } m \neq n \\[.3cm]
+                T/2        & \text{for } m = n
+            \end{cases}
+    \end{align}
+\end{minipage}
+
+\begin{align}
+        \langle cos(m\theta) | sin(n\theta) \rangle &= \int_{0}^{T} cos(m\theta)sin(n\theta) \,d\theta \\[.3cm]
+        \langle cos(m\theta) | sin(n\theta) \rangle &= 0 \hspace{1cm}\text{for all } m,n
+\end{align} 
+
+The last equality results from one being odd and the other being even function, which makes the product odd, and in the given integration boundaries, this will result in 0. Thus, we can write a function in terms of sines and cosines,
+
+\begin{equation}
+    f(x) = \sum_{n=0}^{\infty} a_n cos(nx) + \sum_{n=0}^{\infty} b_n sin(nx)
+\end{equation}
+Since for $n=$0, sine is always 0, we can write Fourier series in general as,
+\begin{equation}
+    f(x) = a_0 + \sum_{n=1}^{\infty} a_n cos(nx) + \sum_{n=1}^{\infty} b_n sin(nx)
+\end{equation}
+
+Let's define the $n^{th}$ Fourier term as,
+\begin{equation}
+    \mathcal{F}^n(x) = a_n cos(nx) + b_n sin(nx)
+\end{equation}
+
+Further, divide the sine and cosine terms apart by defining,
+
+\begin{align}
+    \mathcal{F}^n(x) &= cos(nx) \hspace{1cm}\text{for } n\geq 0 \label{fourier-basis-cos}\\[.3cm]
+    \mathcal{F}^n(x) &= sin(|n|x) \hspace{1cm}\text{for } n < 0
+    \label{fourier-basis-sin}
+\end{align}

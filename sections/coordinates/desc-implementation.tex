@@ -1,0 +1,36 @@
+\subsection{DESC Implementation}
+
+In DESC, we use flux coordinates ($\rho, \theta$ and $\zeta$) to define the flux surface shape in R, Z and $\lambda$ coordinates. This is the first time I introduce $\lambda$, I know it is a bit out of the blue, but for now just accept it, later we will derive it and explain why we need it. So, the flux surface shape can be written as,
+\begin{align}
+    &R(\rho, \theta, \zeta)  \label{eq_R}\\
+    &Z(\rho, \theta, \zeta) \label{eq_Z}\\
+    &\lambda(\rho, \theta, \zeta)
+\end{align}
+{\color{red}Do not confuse $\Vec{\mathbf{R}}$ and R.} The former is the whole vector whereas the latter is only the radial distance component in cylindrical coordinates. And, these functions will be expressed in terms of the Fourier-Zernike basis shown by equation \ref{fourier-zernike-basis}. {\color{red}Again, do not confuse $\mathcal{R}$ and R.} $\mathcal{R}$ is used for the radial part of Zernike Polynomials. Sorry for the similar symbols but this is the convention. 
+
+We talked about many different coordinates and functions until now, I know it seems to be confusing. I'll try to explain why we use these briefly. Our overall aim is to find some parameters that make the force error minimum (with the given pressure profile or some other adequate information). To calculate force error, we need to find the magnetic field and electric current density. In the next section, we will see that current density can be derived from magnetic field. So, all we need is to find magnetic field. We could have chosen many different coordinates but since by definition the magnetic field is tangent to flux surfaces, we automatically reduce the number of components to calculate to 2. So, it is convenient to use flux surfaces. And previously, we showed that if you choose a set of surfaces that keep some parameters constant, you can construct a new basis. Since we use flux surfaces, we call these flux coordinates. Here, R and Z in eq \ref{eq_R} and \ref{eq_Z} are the same as in equation \ref{jacobian}. $\lambda$ is somehow making our calculations easier. Mainly, the shape of the flux surface is defined by R and Z, but for the direction of the magnetic field on that surface, we need $\lambda$, this will be proven. Finally, since we know that our geometry will be some form of a torus, we are using the Fourier-Zernike basis (Fourier for toroidal direction and Zernike for a cross-section in a constant toroidal angle). So, the nature of our problem kind of forces us to use them, like quantum mechanics forces you to use spherical Bessel functions or signal processing forces you to use Fourier series or many other examples. Hard problem brings some fancy mathematical tool to come in handy. Please quote this as my words...
+
+So, very briefly the procedure will be,
+\begin{itemize}
+    \item Give the input parameters
+    \item Make an initial guess for R, Z and $\lambda$
+    \item Plug them in equation \ref{mag_theta_at} to get $\Vec{\B}$
+    \item Calculate Force error from \ref{force-error}
+    \item Use an optimization algorithm to converge on R, Z and $\lambda$
+\end{itemize}
+
+In general, we will define the resolution of Fourier-Zernike basis. So, the optimization will try to find coefficients of each mode in equation \ref{fourier-zernike-coef} which are $c_{lmn}$'s and which make force error minimum. For R, Z and $\lambda$, we will use R$_{lmn}$, Z$_{lmn}$ and $\lambda_{lmn}$. The abovementioned equations will be derived in the next section.
+
+\begin{subequations}
+\begin{equation}
+    R(\rho,\theta,\zeta) = \sum_{m=-M,n=-N,l=0}^{M,N,L} R_{lmn} \mathcal{Z}_l^m (\rho,\theta) \mathcal{F}^n(\zeta)
+\end{equation}
+\begin{equation}
+    \lambda(\rho,\theta,\zeta) = \sum_{m=-M,n=-N,l=0}^{M,N,L} \lambda_{lmn} \mathcal{Z}_l^m (\rho,\theta) \mathcal{F}^n(\zeta)
+\end{equation}
+\begin{equation}
+Z(\rho,\theta,\zeta) = \sum_{m=-M,n=-N,l=0}^{M,N,L} Z_{lmn} \mathcal{Z}_l^m (\rho,\theta) \mathcal{F}^n(\zeta)
+\end{equation}
+\end{subequations}
+
+

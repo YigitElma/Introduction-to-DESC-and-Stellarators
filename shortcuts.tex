@@ -1,0 +1,135 @@
+% Shortcuts
+
+% Please use the following shortcuts when you update a theory section or add a new one for consistency and 
+% clarity of the document for future editing.
+
+\newcommand{\todo}[1]{{\color{red}{#1}}}
+
+\newcommand{\jac}{\sqrt{g}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\J}{\mathbf{J}}
+\newcommand{\e}{\mathbf{e}}
+
+\newcommand{\dFluxRho}{\cfrac{\partial \psi_{T}}{\partial \rho}}
+
+\newcommand{\dRr}{\cfrac{\partial R}{\partial \rho}}
+\newcommand{\dRt}{\cfrac{\partial R}{\partial \theta}}
+\newcommand{\dRz}{\cfrac{\partial R}{\partial \zeta}}
+
+\newcommand{\dZr}{\cfrac{\partial Z}{\partial \rho}}
+\newcommand{\dZt}{\cfrac{\partial Z}{\partial \theta}}
+\newcommand{\dZz}{\cfrac{\partial Z}{\partial \zeta}}
+
+\newcommand{\dLr}{\cfrac{\partial \lambda}{\partial \rho}}
+\newcommand{\dLt}{\cfrac{\partial \lambda}{\partial \theta}}
+\newcommand{\dLz}{\cfrac{\partial \lambda}{\partial \zeta}}
+
+\newcommand{\Brho}{(B^\theta \e_\theta + B^\zeta \e_\zeta) \cdot \e_\rho}
+\newcommand{\Btheta}{(B^\theta \e_\theta + B^\zeta \e_\zeta) \cdot \e_\theta}
+\newcommand{\Bzeta}{(B^\theta \e_\theta + B^\zeta \e_\zeta) \cdot \e_\zeta}
+
+\newcommand{\Bvector}{ \cfrac{1}{2\pi\jac}\dFluxRho\begin{bmatrix}
+        \left(\iota - \dLz\right)\e_{\theta} + \left(1 + \dLt\right) \e_\zeta
+    \end{bmatrix}
+}
+
+\newcommand{\Bvectoreval}{ \cfrac{1}{2\pi\jac}\dFluxRho\begin{bmatrix}
+        \left(\iota - \dLz\right)\e_{\theta}|_{\rho,\zeta} + \left(1 + \dLt\right) \e_\zeta|_{\rho,\theta}
+    \end{bmatrix}
+}
+
+\newcommand{\BsupT}{\cfrac{1}{2\pi\jac}\dFluxRho\left(\iota - \dLz\right)}
+\newcommand{\BsupZ}{\cfrac{1}{2\pi\jac}\dFluxRho\left(1 + \dLt\right)}
+\newcommand{\Jacobian}{R \left( \dRr  \dZt + \dRt  \dZr \right)}
+
+
+
+% --- common math notation ---
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\group}{\lparen}{\rparen}
+\DeclarePairedDelimiter{\groupbrack}{\lbrack}{\rbrack}
+
+% see mathtools package section 3.6 for explanation of the below set command
+% just to make sure it exists
+\ProvideDocumentCommand{\given}{}{}
+% can be useful to refer to this outside \set
+\NewDocumentCommand{\setSymbol}{o}{
+    \mathchoice{\:}{\:}{\,}{\,}\IfValueT{#1}{#1}\vert
+    \allowbreak
+    \mathchoice{\:}{\:}{\,}{\,}
+    \mathopen{}}
+\DeclarePairedDelimiterX{\set}[1]{\lbrace}{\rbrace}{%
+    \RenewDocumentCommand{\given}{}{\setSymbol[\delimsize]}
+    #1
+}
+% intervals
+\DeclarePairedDelimiterX{\closeint}[2]{\lbrack}{\rbrack}{#1, #2}
+\DeclarePairedDelimiterX{\openint}[2]{\lparen}{\rparen}{#1, #2}
+\DeclarePairedDelimiterX{\clopenint}[2]{\lbrack}{\rparen}{#1, #2}
+\DeclarePairedDelimiterX{\openclint}[2]{\lparen}{\rbrack}{#1, #2}
+% inner product
+\DeclarePairedDelimiterX{\innerp}[2]{\langle}{\rangle}{#1, #2}
+% sign function
+\DeclareMathOperator{\sign}{sign}
+% natural numbers from 1 to given argument
+\NewDocumentCommand{\nats}{m}{\symbb{N} \cap \closeint{1}{#1}}
+% integers from 0 to given argument
+\NewDocumentCommand{\ints}{m}{\symbb{Z} \cap \closeint{0}{#1}}
+
+% --- linear algebra ---
+% transpose
+\NewDocumentCommand{\trans}{m}{{#1}^{\mathsf{T}}}
+% Hermitian (conjugate) transpose
+\NewDocumentCommand{\herm}{m}{{#1}^{\mathsf{H}}}
+% image of argument (subset of codomain)
+\DeclareMathOperator{\image}{image}
+% rank of matrix
+\DeclareMathOperator{\rank}{rank}
+% dimension of kernel
+\DeclareMathOperator{\nullity}{nullity}
+% % bold vectors
+% \AtBeginDocument{\RenewDocumentCommand{\vec}{m}{\mathbf{#1}}}
+\DeclarePairedDelimiter{\mean}{\langle}{\rangle}
+
+\newtcbox{\class}[1][]{on line,
+    colback=plasmalightgreen,
+    coltext=white,
+    boxrule=0pt,
+    arc=4pt, % Controls the roundness of corners
+    boxsep=1pt,
+    left=2pt,
+    right=2pt,
+    top=1pt,
+    bottom=1pt,
+    #1}
+    
+\newtcbox{\obj}[1][]{on line,
+    colback=plasmagreen,
+    coltext=white,
+    boxrule=0pt,
+    arc=4pt, % Controls the roundness of corners
+    boxsep=1pt,
+    left=2pt,
+    right=2pt,
+    top=1pt,
+    bottom=1pt,
+    #1}
+
+\newtcbox{\opt}[1][]{on line,
+    colback=plasmadarkgreen,
+    coltext=white,
+    boxrule=0pt,
+    arc=4pt, % Controls the roundness of corners
+    boxsep=1pt,
+    left=2pt,
+    right=2pt,
+    top=1pt,
+    bottom=1pt,
+    #1}
+\newcommand{\function}[1]{{\color{blue}{#1}}}
+\newcommand{\attribute}[1]{{\color{red}{#1}}}
+\newcommand{\dx}{\Delta x}
+\newcommand{\dc}{\Delta c}

@@ -1,0 +1,107 @@
+
+\definecolor{C1}{HTML}{19bd44} % green
+\definecolor{C2}{HTML}{ff3300} % Red
+\definecolor{C3}{HTML}{3399ff} % Blue
+
+\section{Factorize Linear Constraints - Example} \label{appendix-factorize}
+Let's say our constraint is $\mathbf{A}$ and state vector $\mathbf{x}$ satisfy following,
+\begin{equation*}
+    \mathbf{A}\mathbf{x} = \mathbf{b}
+\end{equation*}
+For most of the equilibrium solves, we have some FixParameter constraints and SelfConsistency constraints. FixParameter constraints are basically $x_i = b_i$. SelfConsistency constraints are some linear combination of elements of state vector $\mathbf{x}$ is 0 and moreover, this linear combination has only 1 negative coefficient. For example,
+\begin{equation*}
+    x_1 + x_2 + x_3 + x_4 = x_8
+\end{equation*}
+is formulated in all SelfConsistency constraints as,
+\begin{equation*}
+    x_1 + x_2 + x_3 + x_4 {\color{C2}- x_8} = 0
+\end{equation*}
+to have a target value of 0. Now, let's look at a bunch of fixed and self-consistency constraints in matrix form,
+\begin{equation*}
+    \begin{bmatrix}
+         \color{C1} 1 & 0 & 0 &  0 &  0 &  0 &  0 &  0 & 0 &  0 \\
+         0 & \color{C1} 1 & 0 &  0 &  0 &  0 &  0 &  0 & 0 &  0 \\
+         0 & 0 & \color{C1} 1 &  0 &  0 &  0 &  0 &  0 & 0 &  0 \\
+         \color{C1}1 & \color{C1}3 & 0 &  \color{C2} 1 &  0 &  0 &  0 &  0 & 0 &  0 \\
+         0 & \color{C1}1 & \color{C1}5 &  0 &  \color{C2} -1 &  0 &  0 &  0 & 0 &  0 \\
+         \color{C1}1 & \color{C1}1 & \color{C1}1 &  0 &  0 &  \color{C2} 2 &  0 &  0 & 0 &  0 \\
+         \color{C1}1 & 0 & \color{C1}1 &  0 &  0 &  0 &  1 &  1 & 0 & \color{C3}-1 \\
+         \color{C1}1 & \color{C1}1 & 0 &  \color{C2}1 &  0 &  0 &  2 &  5 & \color{C3}-1 &  0 \\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+         * & * & * &  * &  * &  * &  * &  * & * &  *\\
+    \end{bmatrix}
+    \begin{bmatrix}
+        \color{C1} x_1 \\ 
+        \color{C1} x_2 \\ 
+        \color{C1} x_3 \\ 
+        \color{C2} x_4 \\ 
+        \color{C2} x_5 \\ 
+        \color{C2} x_6 \\ 
+        x_7 \\ 
+        x_8 \\ 
+        \color{C3} x_9 \\ 
+        \color{C3} x_{10} 
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        1 \\ 2 \\ 5 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 
+    \end{bmatrix}
+\end{equation*}
+Here I used {\color{C1}color} for explicitly fixed parameters, {\color{C2}color} for implicitly fixed parameters, and {\color{C3}color} for the parameters that depend on other parameters. Black parameters $x_7$ and $x_8$ are normal parameters. $*$ elements are some number but for this example not important what the values are. \\\\
+Now, let's apply the procedure of the current $factorize\_linear\_constraints()$ function, that is find the rows of $\mathbf{A}$ that have \textbf{only 1 non-zero coefficient}, and remove them from both $\mathbf{A}, \mathbf{b}$ and $\mathbf{x}$. So, we will only remove {\color{C1}color} parameters {\color{C1}($x_1 = 1, x_2 = 2, x_3 = 5$)}, and get following,
+\begin{equation*}
+    \begin{bmatrix}
+         \color{C2} 1 &  0 &  0 &  0 &  0 & 0 &  0 \\
+         0 &  \color{C2} -1 &  0 &  0 &  0 & 0 &  0 \\
+         0 &  0 &  \color{C2} 2 &  0 &  0 & 0 &  0 \\
+         0 &  0 &  0 &  1 &  1 & 0 & \color{C3}-1 \\
+         \color{C2}1 &  0 &  0 &  2 &  5 & \color{C3}-1 &  0 \\
+         * &  * &  * &  * &  * & * &  *\\
+         * &  * &  * &  * &  * & * &  *\\
+         * &  * &  * &  * &  * & * &  *\\
+         * &  * &  * &  * &  * & * &  *\\
+         * &  * &  * &  * &  * & * &  *\\
+         * &  * &  * &  * &  * & * &  *\\
+    \end{bmatrix}
+    \begin{bmatrix}
+        \color{C2} x_4 \\ 
+        \color{C2} x_5 \\ 
+        \color{C2} x_6 \\ 
+        x_7 \\ 
+        x_8 \\ 
+        \color{C3} x_9 \\ 
+        \color{C3} x_{10} 
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        -7 \\ -27 \\ -8 \\ -6 \\ -3 \\ * \\ * \\ * \\ * \\ * \\ * 
+    \end{bmatrix}
+\end{equation*}
+Notice that now {\color{C2}color} parameters have become explicitly fixed parameters. And we exactly know that {\color{C1}$x_4 = -7, x_5 = 27, x_6 = -4$}. We do the above step repeatedly until we end up with no explicit fixed parameters. So, next, we will remove the fixed again,
+\begin{equation*}
+    \begin{bmatrix}
+         1 &  1 & 0 & \color{C3}-1 \\
+         2 &  5 & \color{C3}-1 &  0 \\
+         * &  * & * &  *\\
+         * &  * & * &  *\\
+         * &  * & * &  *\\
+         * &  * & * &  *\\
+         * &  * & * &  *\\
+         * &  * & * &  *\\
+    \end{bmatrix}
+    \begin{bmatrix}
+        x_7 \\ 
+        x_8 \\ 
+        \color{C3} x_9 \\ 
+        \color{C3} x_{10} 
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        -6 \\ 4 \\ * \\ * \\ * \\ * \\ * \\ * 
+    \end{bmatrix}
+\end{equation*}
+There are no more explicitly fixed parameters. However, {\color{C3}$x_9$ and $x_{10}$} are dependent on $x_7$ and $x_8$. This should be done automatically by null-space calculation, but due to numerical accuracy issues of singular value decomposition, I believe we end up with some problems. What I suggest is to manually detect these self-consistency parameters, and reduce the state vector and once it is needed, project it to the full state vector by applying the self-consistency relations to the optimizable parameters. This check could be the number of negative coefficients on a row. If there are 1 or more positive coefficients but only 1 negative coefficient or vice-versa, then it is a self-consistent parameter and shouldn't be optimized over. The new projection function should deal with those.

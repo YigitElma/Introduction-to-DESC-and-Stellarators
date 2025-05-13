@@ -1,0 +1,57 @@
+\subsection{Vector Operations}
+
+\subsubsection{Dot Product}
+\begin{equation}
+    g_{ij} = \e_i \cdot \e_j
+\end{equation}
+\begin{equation}
+    \mathbf{A} \cdot \mathbf{B} = A^i B_j = g_{ij} A^i B^j \label{cl-dot}
+\end{equation}
+
+\subsubsection{Cross Product}
+\begin{align}
+    \mathbf{A} \times \mathbf{B} &= \jac \sum_k (A^i B^j - A^j B^i)\e^k \label{cl-cross-contra}\\
+    &= \frac{1}{\jac} \sum_k (A_i B_j - A_j B_i)\e_k  \label{cl-cross-co}
+\end{align}
+
+
+
+
+\subsection{Del Operator in Curvilinear Coordinates}
+Look for D'Haeseleer book \cite{dhaeseleer_flux_2012} page 35 for details.
+
+Del operator for an arbitrary curvilinear coordinate frame is defined as,
+\begin{equation}
+    \nabla \equiv \nabla u^i \equiv \e^i \frac{\partial}{\partial u^i}
+\end{equation}
+\subsubsection{Gradient}
+The gradient can be expressed as,
+\begin{equation}
+    \nabla \Phi = \sum_i \frac{\partial \Phi}{\partial u^i} \nabla u^i= \sum_i \frac{\partial \Phi}{\partial u^i} \e^i  \label{cl-grad}
+\end{equation}
+
+\subsubsection{Divergence}
+The divergence can be expressed as,
+\begin{equation}
+    \nabla \cdot \mathbf{A} = \frac{1}{\jac} \sum_i \frac{\partial}{\partial u^i}(\jac A^i)  \label{cl-div}
+\end{equation}
+\subsubsection{Curl}
+The curl can be expressed as,
+\begin{align}
+    \nabla \times \mathbf{A} &= \nabla \times (\sum_j A_j\e^j) \\
+    \text{distribute curl} \hspace{1cm}&= \sum_j \left(A_j (\nabla \times \e^j) + \nabla A_j \times \e^j\right) \\
+    \text{use $\nabla \times \e^j = $ 0 and definition of gradient} \hspace{1cm}&= \sum_j\sum_i \frac{\partial A_j}{\partial u^i} \e^i \times \e^j  \\
+    \text{use cross product property eq. \ref{icrossj}} \hspace{1cm}&= \sum_j\sum_i \frac{\varepsilon^{ijk}}{\jac} \frac{\partial A_j}{\partial u^i} \e_k
+\end{align}
+\begin{equation}
+    \nabla \times \mathbf{A} = \frac{1}{\jac} \sum_{k} \left( \frac{\partial A_j}{\partial u^i}  - \frac{\partial A_i}{\partial u^j}\right) \e_k   \label{cl-curl}
+\end{equation}
+
+% or
+% \begin{align}
+%     \nabla \times \mathbf{A} &= \nabla \times (\sum_j A^j\e_j) \\
+%     &= \sum_j \left( A^j (\nabla \times \e_j) + \nabla A^j \times \e_j \right) \\
+%     &= {\color{red}\text{JUST TRYING TO SEE IF THERE IS A WAY TO USE }} \\
+%     &= {\color{red}\text{CONTRAVARIANT B DIRECTLY FOR CONTRAVARIANT J}}
+% \end{align}
+

@@ -1,0 +1,76 @@
+\subsection{Stellarator Symmetry}
+
+Stellarators have different symmetries which we make use of in numerical simulations. One of them is Stellarator symmetry. If a quantity exhibits this symmetry, then the relation between cylindrical coordinates R, Z and $\phi$ expressed in flux coordinates is,
+\begin{align}
+    R(\rho, \theta, \zeta) = R(\rho, -\theta, -\zeta) \\
+    Z(\rho, \theta, \zeta) = - Z(\rho, -\theta, -\zeta) \\
+    \phi(\rho, \theta, \zeta) = - \phi(\rho, -\theta, -\zeta)
+\end{align}
+
+This means R is an even function with respect to coordinates $\theta$ and $\zeta$, whereas Z and $\phi$ are odd functions. In later chapters, we will use $\lambda$ instead of $\phi$. Therefore, in DESC, the stellarator symmetry implies,
+\begin{align}
+    R(\rho, \theta, \zeta) = R(\rho, -\theta, -\zeta) \\
+    Z(\rho, \theta, \zeta) = - Z(\rho, -\theta, -\zeta) \\
+    \lambda(\rho, \theta, \zeta) = - \lambda(\rho, -\theta, -\zeta)
+\end{align}
+From this property, we can say that the Fourier-Zernike basis representation of R will only have cos($m\theta$)cos($n\zeta$) and sin($m\theta$)sin($n\zeta$). For Z and $\lambda$, allowed terms are sin($m\theta$)cos($n\zeta$) and cos($m\theta$)sin($n\zeta$).
+
+Then, with stellarator symmetry applied, R, Z and $\lambda$ can be written as,
+\begin{equation}
+    R(\rho,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} R_{lmn} \begin{cases}
+        cos(m\theta)cos(n\zeta) \mathcal{R}_l^m (\rho) & m,n \geq 0  \\
+        sin(m\theta)sin(n\zeta) \mathcal{R}_l^m (\rho) & m,n < 0
+    \end{cases}
+\end{equation}
+\begin{equation}
+    Z(\rho,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} Z_{lmn} \begin{cases}
+        cos(m\theta)sin(n\zeta) \mathcal{R}_l^m (\rho) & m \geq 0, n < 0 \\
+        sin(m\theta)cos(n\zeta) \mathcal{R}_l^m (\rho) & m< 0, n \geq 0
+    \end{cases}
+\end{equation}
+\begin{equation}
+    \lambda(\rho,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} \lambda_{lmn} \begin{cases}
+        cos(m\theta)sin(n\zeta) \mathcal{R}_l^m (\rho) & m \geq 0, n < 0 \\
+        sin(m\theta)cos(n\zeta) \mathcal{R}_l^m (\rho) & m< 0, n \geq 0
+    \end{cases}
+\end{equation}
+Special condition at $\rho$ = 0, remember property in \ref{zernike-at0},
+\begin{equation}
+    R(\rho=0,\theta,\zeta) = \sum_{l}\sum_{n} \begin{cases}
+        0 & \text{odd $l$} \\
+        R_{l0n} (-1)^{l/2}  cos(n\zeta) & \text{even $l$}
+    \end{cases}
+\end{equation}
+\begin{equation}
+    Z(\rho=0,\theta,\zeta) = -\sum_{l}\sum_{n} \begin{cases}
+        0 & \text{odd $l$} \\
+        Z_{l0n} (-1)^{l/2}sin(n\zeta) & \text{even $l$}
+    \end{cases}
+\end{equation}
+\begin{equation}
+    \lambda(\rho=0,\theta,\zeta) = -\sum_{l} \sum_{n} \begin{cases}
+        0 & \text{odd $l$} \\
+        \lambda_{l0n} (-1)^{l/2} sin(n\zeta) & \text{even $l$}
+    \end{cases} 
+\end{equation}
+Special condition at $\rho$ = 1, radial part of Zernike polynomial is always 1 for $\rho$ = 1,
+\begin{equation}
+    R(\rho=1,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} R_{lmn} \begin{cases}
+        cos(m\theta)cos(n\zeta)  & m,n \geq 0  \\
+        sin(m\theta)sin(n\zeta)  & m,n < 0
+    \end{cases}
+\end{equation}
+\begin{equation}
+    Z(\rho=1,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} Z_{lmn} \begin{cases}
+        cos(m\theta)sin(n\zeta)  & m \geq 0, n < 0 \\
+        sin(m\theta)cos(n\zeta)  & m< 0, n \geq 0
+    \end{cases}
+\end{equation}
+\begin{equation}
+    \lambda(\rho=1,\theta,\zeta) = \sum_{l}^{}\sum_{m}^{}\sum_{n}^{} \lambda_{lmn} \begin{cases}
+        cos(m\theta)sin(n\zeta)  & m \geq 0, n < 0 \\
+        sin(m\theta)cos(n\zeta)  & m< 0, n \geq 0
+    \end{cases}
+\end{equation}
+$\rho$ = 1 surface is frequently used in DESC as a boundary condition. Class {\color{ForestGreen}FourierRZToroidalSurface()} contains given $\rho=1$ surface R and Z functions.
+

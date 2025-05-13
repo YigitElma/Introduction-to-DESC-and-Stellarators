@@ -1,0 +1,420 @@
+% --------------------------------------------------------------------
+% @author       Kaya E. Unalmis
+% @date         2023 July
+% @command      lualatex rotational_transform_and_limit.tex
+% @description  Math to compute the rotational transform in DESC.
+% --------------------------------------------------------------------
+
+% This file is edited by Yigit Gunsur Elmacioglu to include it 
+% in the main text as a subsection. 
+
+% \documentclass{article}
+
+% ------------------------- package loading --------------------------
+% \usepackage[
+%     textwidth=12.5cm,
+% ]{geometry}
+
+% % math packages
+% \usepackage[ISO]{diffcoeff}[=v4]
+% \usepackage{mathtools}
+% % load after mathtools (which loads amsmath)
+% \usepackage{amsthm}
+% % load after any other maths or font-related package
+% \usepackage[
+%     math-style=ISO,
+%     warnings-off={mathtools-colon, mathtools-overbracket},
+% ]{unicode-math}
+
+% % load after most packages, in particular after font-related packages
+% % makes things look better, apparently
+% \usepackage{microtype}
+
+% % almost always load last
+% \usepackage{hyperref}
+% \hypersetup{
+% 	colorlinks=true,
+% 	pdfdisplaydoctitle=true,
+%     pdfauthor={Kaya E. Unalmis},
+%     pdfpagemode=UseOutlines,
+% 	pdftitle={Math to compute the rotational transform in DESC},
+% }
+
+% ------------------------ document settings -------------------------
+% % elevate missing character warnings to errors
+% \tracinglostchars=3
+
+% % --- math commands ---
+% % begin patch for amsthm bug
+% \makeatletter
+% \RenewDocumentEnvironment{proof}{O{\proofname}}{\par
+%     \pushQED{\qed}%
+%     \normalfont \topsep6\p@\@plus6\p@\relax
+%     \trivlist
+%     \item\relax
+%         {\itshape
+%     #1\@addpunct{.}}\hspace\labelsep\ignorespaces
+% }{\popQED\endtrivlist\@endpefalse}
+% \makeatother
+% % end patch for amsthm bug
+% \NewDocumentEnvironment{solution}{}{\begin{proof}[Solution]}{\end{proof}}
+
+% % begin patch for unicode-math bug
+% % https://tex.stackexchange.com/questions/547584/unicode-math-swallows-my-backslash
+% \AtBeginDocument{\RenewDocumentCommand{\setminus}{}{\smallsetminus}}
+% % end patch for unicode-math bug
+
+% \theoremstyle{plain}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{lemma}{Lemma}
+% \NewDocumentCommand{\lemmaautorefname}{}{Lemma}
+% \theoremstyle{definition}
+% \newtheorem{definition}{Definition}
+% \NewDocumentCommand{\definitionautorefname}{}{Definition}
+% \newtheorem{problem}{Problem}
+% \NewDocumentCommand{\problemautorefname}{}{Problem}
+% \theoremstyle{remark}
+% \newtheorem*{remark}{Remark}
+
+% % --- universal constants (not variables) ---
+% \NewDocumentCommand{\e}{}{\symrm{e}}
+% \NewDocumentCommand{\im}{}{\symrm{i}}
+% \NewDocumentCommand{\pi}{}{\symrm{\pi}}
+
+% % --- common math notation ---
+% \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+% \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+% \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+% \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+% \DeclarePairedDelimiter{\group}{\lparen}{\rparen}
+% \DeclarePairedDelimiter{\groupbrack}{\lbrack}{\rbrack}
+% % see mathtools package section 3.6 for explanation of the below set command
+% % just to make sure it exists
+% \ProvideDocumentCommand{\given}{}{}
+% % can be useful to refer to this outside \set
+% \NewDocumentCommand{\setSymbol}{o}{
+%     \mathchoice{\:}{\:}{\,}{\,}\IfValueT{#1}{#1}\vert
+%     \allowbreak
+%     \mathchoice{\:}{\:}{\,}{\,}
+%     \mathopen{}}
+% \DeclarePairedDelimiterX{\set}[1]{\lbrace}{\rbrace}{%
+%     \RenewDocumentCommand{\given}{}{\setSymbol[\delimsize]}
+%     #1
+% }
+% % intervals
+% \DeclarePairedDelimiterX{\closeint}[2]{\lbrack}{\rbrack}{#1, #2}
+% \DeclarePairedDelimiterX{\openint}[2]{\lparen}{\rparen}{#1, #2}
+% \DeclarePairedDelimiterX{\clopenint}[2]{\lbrack}{\rparen}{#1, #2}
+% \DeclarePairedDelimiterX{\openclint}[2]{\lparen}{\rbrack}{#1, #2}
+% % inner product
+% \DeclarePairedDelimiterX{\innerp}[2]{\langle}{\rangle}{#1, #2}
+% % sign function
+% \DeclareMathOperator{\sign}{sign}
+% % natural numbers from 1 to given argument
+% \NewDocumentCommand{\nats}{m}{\symbb{N} \cap \closeint{1}{#1}}
+% % integers from 0 to given argument
+% \NewDocumentCommand{\ints}{m}{\symbb{Z} \cap \closeint{0}{#1}}
+
+% % --- linear algebra ---
+% % transpose
+% \NewDocumentCommand{\trans}{m}{{#1}^{\mathsf{T}}}
+% % Hermitian (conjugate) transpose
+% \NewDocumentCommand{\herm}{m}{{#1}^{\mathsf{H}}}
+% % image of argument (subset of codomain)
+% \DeclareMathOperator{\image}{image}
+% % rank of matrix
+% \DeclareMathOperator{\rank}{rank}
+% % dimension of kernel
+% \DeclareMathOperator{\nullity}{nullity}
+% % bold vectors
+% \AtBeginDocument{\RenewDocumentCommand{\vec}{m}{\mathbf{#1}}}
+
+% ------------------------- document content -------------------------
+% \DeclarePairedDelimiter{\mean}{\langle}{\rangle}
+% \title{Math to compute the rotational transform in DESC}
+% \author{Kaya E. Unalmis}
+% \date{August 29, 2023}
+
+% \begin{document}
+
+% \maketitle
+% \tableofcontents
+
+\subsection{Math to compute the rotational transform in DESC}
+{\color{red} \textbf{NOTE:} This portion is reformatted, there might be missing symbols etc. Might be better read the original PDF}
+\subsubsection{Terminology}
+\begin{itemize}
+	\item \(\mean{Q}_{\sqrt{g}} = (\oiint \dl{\theta} \dl{\zeta} \sqrt{g} \medspace Q) / (\oiint \dl{\theta} \dl{\zeta}  \sqrt{g})\) is the flux surface average of \(Q\).
+	\item \(\mean{Q} = (\oiint \dl{\theta} \dl{\zeta} \medspace Q) / (\oiint \dl{\theta} \dl{\zeta})\) is the flux surface average without \(\sqrt{g}\) of \(Q\)
+	\item \(I = \mean*{B_{\theta}} \) is the enclosed net toroidal current in tesla-meters
+	\item \verb|data["I"]| \(= \mu_0\) \verb|data["current"]|$/2 \pi$
+	\item \(\psi\) is the toroidal flux normalized by 2 $\pi$
+	\item \(\rho\) is the flux surface label
+	\item \(\diff{\psi}/{\rho}\) is \verb|data["psi_r"]| \(=\) \verb|params["Psi"]_r|$/ 2\pi$
+	\item \(\lambda\) is the poloidal stream function
+	\item \(\omega\) is the toroidal stream function
+	\item \(\iota\) is the rotational transform normalized by $2 \pi$
+\end{itemize}
+
+\subsubsection{Derivation}
+Any vector can be written as a contravariant coordinate vector dot product with covariant basis vectors.
+\begin{equation}
+	\mathbf{B} = B^{\rho} \mathbf{e_{\rho}} + B^{\theta} \mathbf{e_{\theta}} + B^{\zeta} \mathbf{e_{\zeta}}
+\end{equation}
+Assume nested flux surfaces.
+\begin{equation}
+	\mathbf{B} = B^{\theta} \mathbf{e_{\theta}} + B^{\zeta} \mathbf{e_{\zeta}}
+\end{equation}
+The components of the magnetic field are defined as
+\begin{align}
+	B^{\theta} & = \frac{\diff{\psi}/{\rho}}{\sqrt{g}} \group*{\iota - \diffp{\lambda}{\zeta}} \\
+	B^{\zeta}  & = \frac{\diff{\psi}/{\rho}}{\sqrt{g}} \group*{1 + \diffp{\lambda}{\theta}}
+\end{align}
+Rearranging gives an equation for the rotational transform.
+\begin{equation}
+	\iota = \frac{\sqrt{g}}{\diff{\psi}/{\rho}} B^{\theta} + \diffp{\lambda}{\zeta}
+\end{equation}
+This suggests you can chain a relation between \(\iota\) and \(I\) through the common terms \(B^{\theta}\) and \(B_{\theta}\) in the equations for \(\iota\) and \(I\), respectively.
+\begin{align}
+	I & = \mean*{B_{\theta}}                                                                                    \\
+	  & = \mean*{\mathbf{B} \cdot \mathbf{e_{\theta}}}                                                            \\
+	  & = \mean*{\group*{B^{\theta} \mathbf{e_{\theta}} + B^{\zeta} \mathbf{e_{\zeta}}} \cdot \mathbf{e_{\theta}}}
+\end{align}
+Plugging in definitions for the coefficients of the metric tensor \(g\),
+\begin{equation}
+	I = \mean*{B^{\theta} g_{\theta \theta} + B^{\zeta} g_{\theta \zeta}}
+\end{equation}
+Surface average operations are additive homomorphisms.
+\begin{equation}
+	I = \mean*{B^{\theta} g_{\theta \theta}} + \mean*{B^{\zeta} g_{\theta \zeta}}
+\end{equation}
+Some rearranging eventually yields \(\iota\) as a function of \(I\).
+\begin{align}
+	\mean*{B^{\theta} g_{\theta \theta}}                                                                                                                       & = I - \mean*{B^{\zeta} g_{\theta \zeta}} \\
+	\mean*{\frac{\diff{\psi}/{\rho}}{\sqrt{g}} \group*{\iota - \diffp{\lambda}{\zeta}} g_{\theta \theta}}                                                      & =                                        \\
+	\mean*{\frac{\diff{\psi}/{\rho}}{\sqrt{g}} \iota g_{\theta \theta}} - \mean*{\frac{\diff{\psi}/{\rho}}{\sqrt{g}} \diffp{\lambda}{\zeta} g_{\theta \theta}} & =
+\end{align}
+For flux surface functions, surface average operations are the identity operation.
+\begin{gather}
+	\diff{\psi}{\rho} \group*{\iota \mean*{\frac{g_{\theta \theta}}{\sqrt{g}}} - \mean*{\diffp{\lambda}{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}}}} = I - \mean*{B^{\zeta} g_{\theta \zeta}} \\
+	\iota = \group*{\frac{I - \mean*{B^{\zeta} g_{\theta \zeta}}}{\diff{\psi}/{\rho}} + \mean*{\diffp{\lambda}{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}}}} \bigg / \mean*{\frac{g_{\theta \theta}}{\sqrt{g}}}
+	\label{eq:rotationalTransform}
+\end{gather}
+
+\subsubsection{Other arrangements}
+The following are equivalent rearrangements of \eqref{eq:rotationalTransform}.
+I am unsure which are more robust numerically.
+Small magnitudes in the denominator will be bad.
+Subtracting similar magnitude terms also results in floating point errors.
+\begin{equation}
+	\iota = \group*{\frac{I}{\diff{\psi}/{\rho}} + \mean*{\diffp{\lambda}{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}} - \frac{B^{\zeta} g_{\theta \zeta}}{\diff{\psi}/{\rho}} }} \bigg / \mean*{\frac{g_{\theta \theta}}{\sqrt{g}}}
+\end{equation}
+Replacing \(B^{\zeta}\) gives
+\begin{equation}
+	\iota = \group*{\frac{I}{\diff{\psi}/{\rho}} + \mean*{\frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}}}} \bigg / \mean*{\frac{g_{\theta \theta}}{\sqrt{g}}} \label{eq:surfaveogiota}
+\end{equation}
+Integral form
+\begin{equation}
+	\iota = \group*{4 \pi^2 I + \diff{\psi}{\rho} \oiint \dl{\theta} \dl{\zeta} \frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}}} \bigg / \group*{\diff{\psi}{\rho} \oiint \dl{\theta} \dl{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}}} \label{eq:integral:form}
+\end{equation}
+\begin{equation}
+	\iota = \group*{4 \pi^2 \frac{I}{\diff{\psi}/{\rho}} + \oiint \dl{\theta} \dl{\zeta} \frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}}} \bigg / \group*{\oiint \dl{\theta} \dl{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}}} \label{eq:integral:form2}
+\end{equation}
+The term \(4 \pi^2 I\) is an additional term that supplements the zero current version of iota to account for the net toroidal current.
+It can also be derived (not rigorously) by applying Ampere's law on a toroidal cross-section.
+This is because \(\iota \cong \diff{\chi}/{\psi}\) (change in poloidal flux over toroidal flux) and Ampere's law shows that, for every thin slice of a toroidal cross-section, the toroidal current generates an extra poloidal flux of \(\int \dl{\theta} (\vec{B} \cdot \vec{e_{\theta}})\),
+which is on average equal to \(2 \pi I \cong 2 \pi \mean{\vec{B} \cdot \vec{e_{\theta}}}\).
+In \eqref{eq:surfaveogiota}, this factor of $2 \pi$ is hidden in \(\diff{\psi}/{\rho}\) because we normalized the latter by that same factor.
+TODO: Can prove this rigorously.
+
+\subsubsection{Axis limit of rotational transform}
+
+We know that \(\psi \sim \rho^2\) and \(\vec{e_{\theta}} \to \vec{0}\) as \(\rho \to 0\).
+It follows that
+\begin{equation}
+	\lim_{\rho \to 0} \norm{\mathbf{e_{\theta}}} = 0
+	\implies
+	\begin{cases}
+		\lim_{\rho \to 0} g_{\theta \theta}                \\
+		\lim_{\rho \to 0} \diffp{g_{\theta \theta}}/{\rho} \\
+		\lim_{\rho \to 0} g_{\theta \zeta}                 \\
+		\lim_{\rho \to 0} \sqrt{g}                         \\
+		\lim_{\rho \to 0} I
+	\end{cases} = 0
+\end{equation}
+\begin{equation}
+	\begin{rcases}
+		\lim_{\rho \to 0} \diffp{\norm{\mathbf{e_{\theta}}}}/{\rho} \\
+		\lim_{\rho \to 0} \norm{\mathbf{e_{\zeta}}}                 \\
+		\lim_{\rho \to 0} \norm{\mathbf{e_{\rho}}}
+	\end{rcases} \neq 0 \implies
+	\begin{cases}
+		\lim_{\rho \to 0} \diffp[2]{g_{\theta \theta}}/{\rho} \\
+		\lim_{\rho \to 0} \diffp{\sqrt{g}}/{\rho}
+	\end{cases} \neq 0
+\end{equation}
+
+Computing the limits of the integrands in \eqref{eq:integral:form} shows that \eqref{eq:integral:form} is of the indeterminate form \(0 / 0\).
+However, in that form, the denominator approaches zero more rapidly than the numerator, unless a non-basic combination of parameters is justified to be zero.
+If that justification is made, then the same result obtained below is recovered after three additional applications of l'H\^opital's rule.
+
+It turns out that the rearrangement that groups the toroidal current and the toroidal flux is more amenable to limit analysis than the others.
+We know that the rotational transform must be finite at the axis.%
+\footnote{This statement is equivalent to claiming \(\vec{B} \cdot (\vec{e_{\zeta}} \times \vec{e_{\rho}}) = 0\) at the magnetic axis.}
+Since the denominator of \eqref{eq:surfaveogiota} tends to zero, it follows that \(\iota\) is finite only if its numerator tends to zero.
+Hence, as defined in \eqref{eq:surfaveogiota}, \(\lim_{\rho \to 0} \iota\) is apparently of the indeterminate form \(0 / 0\).%
+\footnote{%
+	I assume interchanging the order of the limit and integral operations is valid in \eqref{eq:surfaveogiota}.
+
+	A sufficient condition for interchanging is uniform convergence of the integrand.
+	Other ways to prove validity of the interchange involve finding some region where the integrand is monotonic.
+	I have failed to prove such properties.
+	I think knowledge of relations that depend on the stellarator is required to deduce such properties.
+	For example, uniform convergence of the simplest integrand in the denominator of \eqref{eq:surfaveogiota} requires finding a region, dependent on \(\epsilon\), where \(\norm{\mathbf{e_{\theta}}} < \epsilon \mathbf{e_{\theta}} / \norm{\mathbf{e_{\theta}}} \cdot \group{\mathbf{e_{\zeta}} \times \mathbf{e_{\rho}}}\) for all \(\epsilon > 0\).
+	This task reduces to showing the covariant basis vectors are never orthogonal, with supremum of angle separation less than \(\pi / 2\).
+	The alternative requires deducing if \(g_{\theta \theta} / \sqrt{g}\) is monotonic near \(\rho=0\).
+
+	In any case, my justification for the interchange follows from our use of finite sums to compute the integrals.
+	When the integrals are replaced with finite sums, the interchange is valid because the limit of each term to be summed exists.
+	Perhaps more importantly, computation shows that the limit we derive here appears to be the continuous extension of \eqref{eq:surfaveogiota} to the \(\rho = 0\) axis.
+	Since \(\iota\) is a physical quantity, we should expect \(\iota\) to be continuous over physical domains.
+	This requires the limit to be a continuous extension.
+}
+
+This suggests we can find the limit of \(\iota\) without decomposing the basis functions.
+With that goal, we define
+\begin{align}
+	\alpha & \cong 4 \pi^2 \frac{I}{\diff{\psi}/{\rho}}                                                                                                           \\
+	\beta  & \cong \oiint \dl{\theta} \dl{\zeta} \frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}} \\
+	\gamma & \cong \oiint \dl{\theta} \dl{\zeta} \frac{g_{\theta \theta}}{\sqrt{g}}
+\end{align}
+Apply l'H\^opital's rule.
+\begin{equation}
+	\lim_{\rho \to 0} \iota = \lim_{\rho \to 0} \frac{\diff{\group{\alpha + \beta}}/{\rho}}{\diff{\gamma}/{\rho}}
+	\label{eq:lhop1}
+\end{equation}
+The bounds of the integrals do not depend on \(\rho\), so we may differentiate under both integrals using the Leibniz integral rule.
+\begin{align}
+	\diff{\alpha}{\rho} & = \frac{4 \pi^2}{(\diff{\psi}/{\rho})^2} \group*{\diff{I}{\rho} \diff{\psi}{\rho} - I \diff[2]{\psi}{\rho}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      \\
+	\diff{\beta}{\rho}  & = \oiint \dl{\theta} \dl{\zeta} \diffp*{\group*{\frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}}}}{\rho}                                                                                                                                                                                                                                                                                                                                                                                                                                         \\
+	                    & \begin{multlined}
+		                      = \oiint \dl{\theta} \dl{\zeta} \left ( \frac{\diffp{\lambda}{\rho, \zeta} g_{\theta \theta} + \diffp{\lambda}{\zeta} \diffp{g_{\theta \theta}}{\rho} - \diffp{\lambda}{\rho, \theta} g_{\theta \zeta} - \group*{1 + \diffp{\lambda}{\theta}} \diffp{g_{\theta \zeta}}{\rho}}{\sqrt{g}} \right . \\
+		                      \left . - \frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}^2} \diffp{\sqrt{g}}{\rho}  \right )
+	                      \end{multlined} \label{eq:muxi:numerator} \\
+	\diff{\gamma}{\rho} & = \oiint \dl{\theta} \dl{\zeta} \diffp*{\group*{\frac{g_{\theta \theta}}{\sqrt{g}}}}{\rho}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \\
+	                    & = \oiint \dl{\theta} \dl{\zeta} \group*{\frac{\diffp{g_{\theta \theta}}{\rho} \sqrt{g} - g_{\theta \theta} \diffp{\sqrt{g}}{\rho}}{\sqrt{g}^2}} \label{eq:iotadenomderiv}
+\end{align}
+
+Now, if each of the following limits exist independently, and the limit in the denominator is nonzero,%
+\footnote{We will later discover this precondition is true.}
+then the following relation holds by the algebraic limit theorem.
+\begin{equation}
+	\lim_{\rho \to 0} \frac{\diff{\group{\alpha + \beta}}/{\rho}}{\diff{\gamma}/{\rho}} = \frac{\lim_{\rho \to 0} \diff{\alpha}/{\rho} + \lim_{\rho \to 0} \diff{\beta}/{\rho}}{\lim_{\rho \to 0} \diff{\gamma}/{\rho}}
+	\label{eq:ALT}
+\end{equation}
+Apply l'H\^opital's rule twice to the derivative of the toroidal current supplement term.
+\begin{equation}
+	\lim_{\rho \to 0} \diff{\alpha}{\rho} = \frac{2 \pi^2}{(\diff[2]{\psi}/{\rho})^2} \group*{\diff[2]{I}{\rho} \diff[2]{\psi}{\rho} -\diff{I}{\rho} \diff[3]{\psi}{\rho}}
+\end{equation}
+Define \(\mu\) and \(\nu\) to be the numerator of the integrand in \eqref{eq:muxi:numerator} and \eqref{eq:iotadenomderiv}, respectively.
+Continue with the assumption that the order of limit and integral operations can be interchanged.
+\begin{align}
+	\lim_{\rho \to 0} \diff{\beta}{\rho}  & = \oiint \dl{\theta} \dl{\zeta} \lim_{\rho \to 0} \frac{\mu}{\sqrt{g}^2} \\
+	\lim_{\rho \to 0} \diff{\gamma}{\rho} & = \oiint \dl{\theta} \dl{\zeta} \lim_{\rho \to 0} \frac{\nu}{\sqrt{g}^2}
+\end{align}
+Both limits are of indeterminate form \(0 / 0\).
+Recall that l'H\^opital's rule relies on Cauchy's generalized mean value theorem, which is a property proven unique to functions that map \(\symbb{R} \to \symbb{R}\).
+Fortunately, some parts of l'H\^opital's rule have recently been generalized to multivariable functions that map \(\symbb{R}^n \to \symbb{R}\) where \(n \in \symbb{N}\).
+Since the singularity is non-isolated and the zero set of the numerator contains the zero set of the denominator inside some small tube surrounding the magnetic axis, we may apply theorem 4, case 1 of the \href{https://doi.org/10.1080/00029890.2020.1793635}{multivariable form of l'H\^opital's rule}.
+\begin{gather}
+	\lim_{\rho \to 0} \frac{\mu}{\sqrt{g}^2} = \lim_{\rho \to 0} \frac{\diffp{\mu}/{\rho}}{\diffp{\sqrt{g}^2}/{\rho}} = \lim_{\rho \to 0} \frac{\diffp[2]{\mu}/{\rho}}{\diffp[2]{\sqrt{g}^2}/{\rho}} \\
+	\lim_{\rho \to 0} \frac{\nu}{\sqrt{g}^2} = \lim_{\rho \to 0} \frac{\diffp{\nu}/{\rho}}{\diffp{\sqrt{g}^2}/{\rho}} = \lim_{\rho \to 0} \frac{\diffp[2]{\nu}/{\rho}}{\diffp[2]{\sqrt{g}^2}/{\rho}} \label{eq:toroidaldenomlimit}
+\end{gather}
+The limit of the denominator is
+\begin{align}
+	\diffp[2]{\sqrt{g}^2}{\rho}                   & = 2 \group*{\diffp{\sqrt{g}}{\rho}}^2 + 2 \sqrt{g} \diffp[2]{\sqrt{g}}{\rho} \\
+	\lim_{\rho \to 0} \diffp[2]{\sqrt{g}^2}{\rho} & = 2 \group*{\diffp{\sqrt{g}}{\rho}}^2 \neq 0
+\end{align}
+Since the above limit is nonzero, we may compute each of the limits \(\diffp[2]{\mu}/{\rho}\) and \(\diffp[2]{\nu}/{\rho}\) independent of it.
+\begin{multline}
+	\diffp[2]{\mu}{\rho} = -\diffp[3]{\sqrt{g}}{\rho} \diffp{\lambda}{\zeta} g_{\theta \theta} + \diffp[3]{\sqrt{g}}{\rho} g_{\theta \zeta} \diffp{\lambda}{\theta} + \diffp[3]{\sqrt{g}}{\rho} g_{\theta \zeta} \\
+	- \diffp{\lambda}{\zeta} \diffp[2]{\sqrt{g}}{\rho} \diffp{g_{\theta \theta}}{\rho} - g_{\theta \theta} \diffp[2]{\sqrt{g}}{\rho} \diffp{\lambda}{\rho, \zeta} + g_{\theta \zeta} \diffp[2]{\sqrt{g}}{\rho} \diffp{\lambda}{\rho, \theta} \\
+	+ \diffp{g_{\theta \zeta}}{\rho} \group*{\diffp[2]{\sqrt{g}}{\rho} \group*{1 + \diffp{\lambda}{\theta}} - 3 \sqrt{g} \diffp[2, 1]{\lambda}{\rho, \theta}} \\
+	+ \diffp{\sqrt{g}}{\rho} \left ( 2 \diffp{\lambda}{\rho, \zeta} \diffp{g_{\theta \theta}}{\rho} + \diffp{\lambda}{\zeta} \diffp[2]{g_{\theta \theta}}{\rho} + g_{\theta \theta} \diffp[2, 1]{\lambda}{\rho, \zeta} \right . \\
+	\left . - 2 \diffp{g_{\theta \zeta}}{\rho} \diffp{\lambda}{\rho, \theta} - \group*{1 + \diffp{\lambda}{\theta}} \diffp[2]{g_{\theta \zeta}}{\rho} - g_{\theta \zeta} \diffp[2, 1]{\lambda}{\rho, \theta} \right ) \\
+	+ 3 \sqrt{g} \diffp{\lambda}{\rho, \zeta} \diffp[2]{g_{\theta \theta}}{\rho} + 3 \sqrt{g} \diffp[2, 1]{\lambda}{\rho, \zeta} \diffp{g_{\theta \theta}}{\rho} + \sqrt{g} \diffp{\lambda}{\zeta} \diffp[3]{g_{\theta \theta}}{\rho} \\
+	+ \sqrt{g} \diffp[3, 1]{\lambda}{\rho, \zeta} g_{\theta \theta} - 3 \sqrt{g} \diffp[2]{g_{\theta \zeta}}{\rho} \diffp{\lambda}{\rho, \theta} - \sqrt{g} \diffp[3]{g_{\theta \zeta}}{\rho} \diffp{\lambda}{\theta} \\
+	- \sqrt{g} g_{\theta \zeta} \diffp[3, 1]{\lambda}{\rho, \theta} - \sqrt{g} \diffp[3]{g_{\theta \zeta}}{\rho}
+\end{multline}
+\begin{equation}
+	\diffp[2]{\nu}{\rho} = \sqrt{g} \diffp[3]{g_{\theta \theta}}{\rho} + \diffp{\sqrt{g}}{\rho} \diffp[2]{g_{\theta \theta}}{\rho} - \diffp[2]{\sqrt{g}}{\rho}\diffp{g_{\theta \theta}}{\rho} - \diffp[3]{\sqrt{g}}{\rho} g_{\theta \theta}
+\end{equation}
+Take the limits.
+\begin{multline}
+	\lim_{\rho \to 0} \diffp[2]{\mu}{\rho} = \group*{1 + \diffp{\lambda}{\theta}} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho} \\
+	+ \group*{\diffp{\lambda}{\zeta} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\lambda}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \group*{1 + \diffp{\lambda}{\theta}} \diffp[2]{g_{\theta \zeta}}{\rho}} \diffp{\sqrt{g}}{\rho}
+\end{multline}
+\begin{equation}
+	\lim_{\rho \to 0} \diffp[2]{\nu}{\rho} = \diffp[2]{g_{\theta \theta}}{\rho} \diffp{\sqrt{g}}{\rho}
+\end{equation}
+Observe that \(\lim_{\rho \to 0} \diff{\gamma}/{\rho} \neq 0\) as required by \eqref{eq:ALT}.
+\begin{equation}
+	\lim_{\rho \to 0} \frac{\nu}{\sqrt{g}^2} = \frac{\diffp[2]{g_{\theta \theta}}/{\rho}}{2 \diffp{\sqrt{g}}/{\rho}} \neq 0 \label{eq:toroidaldenomlimithop}
+\end{equation}
+
+% \newgeometry{textwidth=15.6cm}
+Collecting our results, we conclude:
+\begin{equation}
+	\lim_{\rho \to 0} \iota = \frac{\displaystyle 4 \pi^2 \frac{\diff[2]{I}{\rho} \diff[2]{\psi}{\rho} -\diff{I}{\rho} \diff[3]{\psi}{\rho}}{(\diff[2]{\psi}/{\rho})^2} + \oiint \dl{\theta} \dl{\zeta} \group*{\frac{\group*{1 + \diffp{\lambda}{\theta}} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho} }{(\diffp{\sqrt{g}}/{\rho})^2} + \frac{\diffp{\lambda}{\zeta} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\lambda}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \group*{1 + \diffp{\lambda}{\theta}} \diffp[2]{g_{\theta \zeta}}{\rho}}{\diffp{\sqrt{g}}/{\rho}}}}{\displaystyle \oiint \dl{\theta} \dl{\zeta} \frac{\diffp[2]{g_{\theta \theta}}/{\rho}}{\diffp{\sqrt{g}}/{\rho}}}
+\end{equation}
+Written with surface averages instead of integrals
+\begin{equation}
+	\lim_{\rho \to 0} \iota = \frac{\displaystyle \frac{\diff[2]{I}{\rho} \diff[2]{\psi}{\rho} -\diff{I}{\rho} \diff[3]{\psi}{\rho}}{(\diff[2]{\psi}/{\rho})^2} + \mean*{\frac{\group*{1 + \diffp{\lambda}{\theta}} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho}}{(\diffp{\sqrt{g}}/{\rho})^2} + \frac{\diffp{\lambda}{\zeta} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\lambda}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \group*{1 + \diffp{\lambda}{\theta}} \diffp[2]{g_{\theta \zeta}}{\rho}}{\diffp{\sqrt{g}}/{\rho}}}}{\displaystyle \mean*{\frac{\diffp[2]{g_{\theta \theta}}/{\rho}}{\diffp{\sqrt{g}}/{\rho}}}}
+\end{equation}
+
+\subsubsection{Rotational transform with toroidal stream function}
+\begin{equation}
+	\boxed{\iota = \frac{\displaystyle 4 \pi^2 \frac{I}{\diff{\psi}/{\rho}} + \oiint \dl{\theta} \dl{\zeta} \frac{\diffp{\lambda}{\zeta} g_{\theta \theta} - \group*{1 + \diffp{\lambda}{\theta}} g_{\theta \zeta}}{\sqrt{g}}}{\displaystyle \oiint \dl{\theta} \dl{\zeta} \frac{(1 + \diffp{\omega}{\zeta}) g_{\theta \theta} - \diffp{\omega}{\theta} g_{\theta \zeta}}{\sqrt{g}}}}
+\end{equation}
+The behavior of \(\diffp{\omega}/{\theta}\) near the magnetic axis should ensure that \(\gamma\) tends to zero.
+The quantity \(\diff{\gamma}/{\rho}\) in \eqref{eq:iotadenomderiv} becomes
+\begin{multline}
+	\diff{\gamma}{\rho} = \oiint \dl{\theta} \dl{\zeta} \left( \frac{\diffp{\omega}{\rho, \zeta} g_{\theta \theta} + \group*{1 + \diffp{\omega}{\zeta}} \diffp{g_{\theta \theta}}{\rho} - \diffp{\omega}{\rho, \theta} g_{\theta \zeta} - \diffp{\omega}{\theta} \diffp{g_{\theta \zeta}}{\rho}}{\sqrt{g}}
+	- \frac{\group*{1 + \diffp{\omega}{\zeta}} g_{\theta \theta} - \diffp{\omega}{\theta} g_{\theta \zeta}}{\sqrt{g}^2} \diffp{\sqrt{g}}{\rho} \right)
+\end{multline}
+Then \eqref{eq:toroidaldenomlimit} again requires multiple applications of the \(\symbb{R}^n \to \symbb{R}\) l'H\^opital's rule to evaluate.
+Equation \eqref{eq:toroidaldenomlimithop} becomes
+\begin{equation}
+	\lim_{\rho \to 0} \frac{\nu}{\sqrt{g}^2} = \frac{\diffp{\omega}{\theta} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho}}{2 (\diffp{\sqrt{g}}/{\rho})^2} + \frac{\group*{1 + \diffp{\omega}{\zeta}} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\omega}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \diffp{\omega}{\theta} \diffp[2]{g_{\theta \zeta}}{\rho}}{2 \diffp{\sqrt{g}}/{\rho}} \neq 0
+\end{equation}
+Then the rotational transform at the magnetic axis is given by
+\begin{equation}
+	\lim_{\rho \to 0} \iota = \frac{\displaystyle 4 \pi^2 \frac{\diff[2]{I}{\rho} \diff[2]{\psi}{\rho} -\diff{I}{\rho} \diff[3]{\psi}{\rho}}{(\diff[2]{\psi}/{\rho})^2} + \oiint \dl{\theta} \dl{\zeta} \group*{\frac{\group*{1 + \diffp{\lambda}{\theta}} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho} }{(\diffp{\sqrt{g}}/{\rho})^2} + \frac{\diffp{\lambda}{\zeta} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\lambda}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \group*{1 + \diffp{\lambda}{\theta}} \diffp[2]{g_{\theta \zeta}}{\rho}}{\diffp{\sqrt{g}}/{\rho}}}}{\displaystyle \oiint \dl{\theta} \dl{\zeta} \group*{\frac{\diffp{\omega}{\theta} \diffp{g_{\theta \zeta}}{\rho} \diffp[2]{\sqrt{g}}{\rho}}{(\diffp{\sqrt{g}}/{\rho})^2} + \frac{\group*{1 + \diffp{\omega}{\zeta}} \diffp[2]{g_{\theta \theta}}{\rho} - 2 \diffp{\omega}{\rho, \theta} \diffp{g_{\theta \zeta}}{\rho} - \diffp{\omega}{\theta} \diffp[2]{g_{\theta \zeta}}{\rho}}{\diffp{\sqrt{g}}/{\rho}}}}
+\end{equation}
+Setting \(\omega\) and its derivatives to zero recovers the results without the toroidal stream function.
+% \restoregeometry
+
+\subsubsection{Axis limit of rotational transform derivatives}
+The limits of the derivatives require similar work to compute.
+Recall that as \(\rho \to 0\) so do \(\alpha + \beta\) and \(\gamma\).
+For any \(x \in \set{\alpha + \beta, \gamma}\), \(\diff[n]{x}/{\rho}\) is finite and nonzero for all \(n \in \symbb{N}\).%
+\footnote{Showing this requires \(n+1\) applications of the \(\symbb{R}^m \to \symbb{R}\) l'H\^opital's rule.}
+Previously, we showed
+\begin{align}
+	\iota                   & = \frac{\alpha + \beta}{\gamma}                                                 \\
+	\lim_{\rho \to 0} \iota & = \lim_{\rho \to 0} \frac{\diff{(\alpha + \beta)}/{\rho}}{\diff{\gamma}/{\rho}}
+\end{align}
+Now, the first derivative breaks from the \(0 / 0\) indeterminate form after two applications of the \(\symbb{R} \to \symbb{R}\) l'H\^opital's rule.
+\begin{align}
+	\diff{\iota}{\rho}                   & = \frac{\diff{(\alpha + \beta)}{\rho} \gamma - (\alpha + \beta) \diff{\gamma}{\rho}}{\gamma^2}                                                                                                                                                                                              \\
+	\lim_{\rho \to 0} \diff{\iota}{\rho} & = \lim_{\rho \to 0} \frac{\diff[2]{(\alpha + \beta)}{\rho} \gamma - (\alpha + \beta) \diff[2]{\gamma}{\rho}}{2 \gamma (\diff{\gamma}/{\rho})}                                                                                                                                               \\
+	                                     & = \lim_{\rho \to 0} \frac{\diff[3]{(\alpha + \beta)}{\rho} \gamma + \diff[2]{(\alpha + \beta)}{\rho} \diff{\gamma}{\rho} - \diff{(\alpha + \beta)}{\rho} \diff[2]{\gamma}{\rho} - (\alpha + \beta) \diff[3]{\gamma}{\rho}}{2 (\diff{\gamma}/{\rho})^2 + 2 \gamma (\diff[2]{\gamma}/{\rho})} \\
+	                                     & = \lim_{\rho \to 0} \frac{\diff[2]{(\alpha + \beta)}{\rho} \diff{\gamma}{\rho} - \diff{(\alpha + \beta)}{\rho} \diff[2]{\gamma}{\rho}}{2 (\diff{\gamma}/{\rho})^2}
+\end{align}
+The second derivative eventually reduces to
+\begin{align}
+	\diff[2]{\iota}{\rho}                   & = \frac{\diff[2]{(\alpha + \beta)}{\rho} \gamma^2 - 2 \diff{(\alpha + \beta)}{\rho} \gamma \diff{\gamma}{\rho} + 2 (\alpha + \beta) \group*{\diff{\gamma}{\rho}}^2 - (\alpha + \beta) \gamma \diff[2]{\gamma}{\rho}}{\gamma^3}                                                                                                                            \\
+	\lim_{\rho \to 0} \diff[2]{\iota}{\rho} & = \lim_{\rho \to 0} \frac{2 \diff[3]{(\alpha + \beta)}{\rho} \group*{\diff{\gamma}{\rho}}^2 - 3 \diff[2]{(\alpha + \beta)}{\rho} \diff{\gamma}{\rho} \diff[2]{\gamma}{\rho} + 3 \diff{(\alpha + \beta)}{\rho} \group*{\diff[2]{\gamma}{\rho}}^2 - 2 \diff{(\alpha + \beta)}{\rho} \diff{\gamma}{\rho} \diff[3]{\gamma}{\rho}}{6 (\diff{\gamma}/{\rho})^3}
+\end{align}
+
+% \end{document}

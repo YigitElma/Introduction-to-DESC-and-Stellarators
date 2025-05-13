@@ -1,0 +1,97 @@
+\section{Relation between Zernike Polynomials and Jacobi Polynomials}\label{appedix-2}
+For the special case of $\beta=0$, $x=1-2\rho^2$ and $\alpha=m$, Jacobi Polynomials can be written using equation \ref{jacobi},
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{s=0}^{n} (-1)^s\binom{n+m}{n-s} \binom{n}{s} \rho^{2s}(1-\rho^2)^{n-s} \label{eq_jac}
+\end{equation}
+Now, let's use binomial theorem to expand $(1-\rho^2)^{n-s}$,
+\begin{equation}
+    (1-\rho^2)^{n-s} = \sum_{k=0}^{n-s} (-1)^k \binom{n-s}{k} \rho^{2k}
+\end{equation}
+Substitute this in eq \ref{eq_jac},
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{s=0}^{n} (-1)^s \binom{n}{s} \binom{n+m}{n-s}  \rho^{2s} \sum_{k=0}^{n-s} (-1)^k \binom{n-s}{k} \rho^{2k}
+\end{equation}
+Now, rearrange the terms,
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{s=0}^{n}\sum_{k=0}^{n-s} (-1)^{(s+k)} \binom{n+m}{n-s} \binom{n}{s} \binom{n-s}{k} \rho^{2(s+k)}
+\end{equation}
+Substitute $j=s+k$, hence $k=j-s$ ,
+\begin{align}
+    P_{n}^{m, 0}(1-2\rho^2) &= \sum_{s=0}^{n}\sum_{j-s=0}^{j-s=n-s} (-1)^{j} \binom{n+m}{n-s} \binom{n}{s} \binom{n-s}{j-s}\rho^{2j}\\
+    P_{n}^{m, 0}(1-2\rho^2) &= \sum_{s=0}^{n}\sum_{j=s}^{n} (-1)^{j} \binom{n+m}{n-s} \binom{n}{s} \binom{n-s}{j-s}\rho^{2j}  
+\end{align}
+Here, we can change the order of summation, it is better to use table to find new limits,
+\[
+\begin{array}{c|cccccc}
+  & 0 & 1 & 2 & \cdots & n-1 & n \\
+\hline
+s = 0 & \times & \times & \times & \cdots & \times & \times \\
+s = 1 &       & \times & \times & \cdots & \times & \times \\
+s = 2 &       &       & \times & \cdots & \times & \times \\
+\vdots &       &       &       & \ddots & \vdots & \vdots \\
+s = n-1 &       &       &       &       & \times & \times \\
+s = n &       &       &       &       &       & \times \\
+\end{array}
+\]
+Each \(\times\) represents a valid pair \((s, j)\). This can be re-written in terms of summation over $j$ first, then $s$,
+\[
+\begin{array}{c|cccccc}
+  & 0 & 1 & 2 & \cdots & n-1 & n \\
+\hline
+j = 0 & \times &       &       &       &       &       \\
+j = 1 & \times & \times &       &       &       &       \\
+j = 2 & \times & \times & \times &       &       &       \\
+\vdots &       &       &       & \ddots &       &       \\
+j = n-1 & \times & \times & \times & \cdots & \times &       \\
+j = n & \times & \times & \times & \cdots & \times & \times \\
+\end{array}
+\]
+Since the \((s, j)\) pairs are the same, the nested summation can be written as,
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{j=0}^{n} \rho^{2j}   \sum_{s=0}^{j} (-1)^{j} \frac{(n+m)!}
+    {(n-s)!(m+s)!}\frac{n!}{s!(n-s)!}\frac{(n-s)!}{(j-s)!(n-j)!}
+\end{equation}
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{j=0}^{n} \rho^{2j}   \sum_{s=0}^{j} (-1)^{j} \frac{(n+m)!}{(n-s)!(m+s)!} \frac{j!}{s!(j-s)!} \frac{n!}{j!(n-j)!} 
+\end{equation}
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{j=0}^{n} (-1)^{j} \binom{n}{j} \rho^{2j}   \sum_{s=0}^{j}  \binom{n+m}{n-s} \binom{j}{s}  \label{eq_jacobi2simplify}
+\end{equation}
+Now, we need to use a property of the binomial coefficients. Consider,
+\begin{align}
+    (1+x)^n =& \sum_{k=0}^{n} \binom{n}{k}x^k \\
+    (1+x)^{n+m}(1+x)^j =&  \left(\sum_{k=0}^{n+m} \binom{n+m}{k}x^k\right) \left(\sum_{k=0}^{j} \binom{j}{k}x^k\right) = \left(\sum_{s=-m}^{n} \binom{n+m}{n-s}x^{n-s}\right) \left(\sum_{k=0}^{j} \binom{j}{k}x^k\right) \\
+    (1+x)^{n+m+j} =& \sum_{k=0}^{n+m+j} \binom{n+m+j}{k}x^k 
+\end{align}
+For $x^\gamma$ coefficient, we have 
+\begin{equation}
+    \binom{n+m+j}{\gamma} x^{\gamma}= \sum_{k=0}^{\gamma} \binom{j}{k} \binom{n+m}{\gamma-k} x^{\gamma}
+\end{equation}
+In previous step, I used $n-s+k=\gamma$ and $s=n+k-\gamma$, hence $n-s=\gamma-k$. Now, let's substitute $\gamma=n$,
+\begin{equation}
+    \binom{n+m+j}{n} = \sum_{k=0}^{j} \binom{n+m}{n-k} \binom{j}{k}
+\end{equation}
+We can finally use this relation to simplify eq \ref{eq_jacobi2simplify},
+\begin{equation}
+    P_{n}^{m, 0}(1-2\rho^2) = \sum_{j=0}^{n} (-1)^{j}  \rho^{2j}  \binom{n}{j} \binom{n+m+j}{n}
+\end{equation}
+Lets's multiply last equation by $\rho^m$ and $(-1)^n$,
+\begin{equation}
+    (-1)^n\rho^mP_{n}^{m, 0}(1-2\rho^2) = \sum_{j=0}^{n} (-1)^{j+n}  \rho^{2j+m} \binom{n}{j} \binom{n+m+j}{n}
+\end{equation}
+Substitute $j=n-s$,
+\begin{equation}
+    (-1)^n\rho^mP_{n}^{m, 0}(1-2\rho^2) = \sum_{n-s=0}^{n-s=n} (-1)^{2n-s}  \rho^{2n+m-s}  \binom{n}{n-s} \binom{2n+m-s}{n}
+\end{equation}
+\begin{equation}
+    (-1)^{\frac{l-m}{2}}\rho^mP_{\frac{l-m}{2}}^{m, 0}(1-2\rho^2) = 
+    \sum_{s=0}^{(l-m)/2} (-1)^{s}  \rho^{l-2s}  \binom{\frac{l-m}{2}}{s} \binom{l-s}{\frac{l-m}{2}}
+\end{equation}
+\begin{equation}
+    (-1)^{\frac{l-m}{2}}\rho^mP_{\frac{l-m}{2}}^{m, 0}(1-2\rho^2) = 
+    \sum_{s=0}^{(l-m)/2} (-1)^{s} \cfrac{\frac{l-m}{2}!}{s!(\frac{l-m}{2}-s)!} \cfrac{(l-s)!}{\frac{l-m}{2}!(\frac{l+m}{2}-s)!} \rho^{l-2s}  
+\end{equation}
+\begin{equation}
+    \mathcal{R}_l^{m} (\rho) = (-1)^{\frac{l-m}{2}}\rho^mP_{\frac{l-m}{2}}^{m, 0}(1-2\rho^2) = \mathlarger{\mathlarger{\sum}}_{s=0}^{(l-m)/2} \frac{(-1)^s(l-s)!}{ s!\left( \cfrac{l+m}{2} - s\right)! \left( \cfrac{l-m}{2} - s\right)!}  \hspace{0.1cm} \rho^{l-2s} 
+\end{equation}
+which is exactly equivalent to the radial part of the Zernike Polynomials.
